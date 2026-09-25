@@ -1,0 +1,31 @@
+# Private planning docs stay local; decisions.md is part of the repo.
+/docs/*
+!/docs/decisions.md
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Runtime output
+memgate.ledger.jsonl
+*.ledger.jsonl
+!tests/fixtures/**/*.ledger.jsonl
+playground/backend/.state/
+node_modules/
+.DS_Store
+.remember/
+
