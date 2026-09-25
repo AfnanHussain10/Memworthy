@@ -70,6 +70,12 @@ plugins = ["pydantic.mypy"]
 module = ["mem0", "mem0.*"]
 ignore_missing_imports = true
 
+# Plotting is optional; numpy's stubs use 3.12-only syntax that mypy rejects for 3.10.
+[[tool.mypy.overrides]]
+module = ["matplotlib", "matplotlib.*", "numpy", "numpy.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

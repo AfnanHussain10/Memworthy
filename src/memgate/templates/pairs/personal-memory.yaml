@@ -3,6 +3,7 @@
 # from the policy's built-in tests so the pairs act as a held-out set.
 - template: "I {verb} {city}"
   category: temporary_vs_durable
+  calibrate: {signal: durable, positive: [store]}
   fills: {city: [Lahore, Nairobi, Lisbon, Seoul, Montreal, Cairo, Oslo, Lima, Denver, Tunis]}
   cases:
     - {verb: "have lived in", expect: store}
@@ -10,6 +11,7 @@
 
 - template: "I {verb} as a {job}"
   category: temporary_vs_durable
+  calibrate: {signal: durable, positive: [store]}
   fills: {job: [pharmacist, carpenter, lawyer, dentist, chef, pilot, librarian, architect]}
   cases:
     - {verb: "have a permanent job", expect: store}
@@ -45,16 +47,29 @@
     - {prefix: "Suppose I lived in", expect: reject}
     - {prefix: "Since I live in", expect: store}
 
-- template: "{who} {fact}"
+# Corrected after run 1: the old "{who} {fact}" form produced "I works ...", and it paired a
+# health fact (sensitive, so review by design) with a third-party fact.
+- template: "{text}"
   category: user_vs_third_party
-  fills: {fact: ["works as an accountant", "is allergic to peanuts", "plays chess every day",
-                 "lives in Manchester", "is a vegan", "speaks fluent Greek", "coaches football"]}
+  calibrate: {signal: about_subject, positive: [store]}
+  fills: {text: ["x"]}
   cases:
-    - {who: "I", expect: store}
-    - {who: "My cousin", expect: review}
+    - {pair: 0, text: "I work as an accountant", expect: store}
+    - {pair: 0, text: "My cousin works as an accountant", expect: review}
+    - {pair: 1, text: "I play chess every day", expect: store}
+    - {pair: 1, text: "My cousin plays chess every day", expect: review}
+    - {pair: 2, text: "I live in Manchester", expect: store}
+    - {pair: 2, text: "My cousin lives in Manchester", expect: review}
+    - {pair: 3, text: "I am a vegan", expect: store}
+    - {pair: 3, text: "My cousin is a vegan", expect: review}
+    - {pair: 4, text: "I speak fluent Greek", expect: store}
+    - {pair: 4, text: "My cousin speaks fluent Greek", expect: review}
+    - {pair: 5, text: "I coach football", expect: store}
+    - {pair: 5, text: "My cousin coaches football", expect: review}
 
 - template: "{who} {fact}"
   category: user_vs_third_party
+  calibrate: {signal: about_subject, positive: [store]}
   fills: {fact: ["love gardening", "hate crowded places", "enjoy baking bread",
                  "collect vintage stamps", "cycle to work"]}
   cases:
@@ -141,25 +156,31 @@
 
 - template: "{prefix} I don't actually {fact}"
   category: retraction
+  calibrate: {signal: retraction, positive: [supersede]}
   fills: {fact: ["have a sister", "own a car", "play tennis", "live in Cardiff", "speak Italian"]}
   cases:
     - {prefix: "Sorry, I got that wrong,", existing: ["I {fact}"], expect: supersede}
 
 - template: "I {fact}"
   category: retraction
+  calibrate: {signal: retraction, positive: [supersede]}
   fills: {fact: ["have a sister", "own a car", "play tennis", "speak Italian"]}
   cases:
     - {existing: ["I work in marketing"], expect: store}
 
+# Corrected after run 1: "is training for a marathon" is a temporary state (rejected before the
+# subject rule by design); the pair now changes only whose relationship it is.
 - template: "{name} {verb}"
   category: user_vs_third_party
+  calibrate: {signal: about_subject, positive: [store]}
   fills: {name: [Hassan, Maria, Kenji, Fatima, Lucas, Aisha, Tom]}
   cases:
     - {verb: "is my husband", expect: store}
-    - {verb: "is training for a marathon", expect: review}
+    - {verb: "is my neighbor's husband and works as a pilot", expect: review}
 
 - template: "I {verb} in {city}"
   category: temporary_vs_durable
+  calibrate: {signal: durable, positive: [store]}
   fills: {city: [Houston, Mumbai, Athens, Jakarta, Geneva, Havana, Dakar]}
   cases:
     - {verb: "have owned a house for ten years", expect: store}

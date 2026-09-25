@@ -297,6 +297,45 @@ def review(
         print(f"exported {len(new_tests)} test(s) to {export_tests}")
 
 
+@app.command("eval")
+def eval_cmd(
+    policy: str = typer.Argument(..., help="Template name or policy file"),
+    pairs: Path | None = typer.Option(None, help="Pair file (default: the bundled one)"),
+    judge: str = typer.Option("recorded", help="recorded or jev"),
+    fixtures: Path | None = typer.Option(None, help="Fixture file for --judge recorded"),
+    out: Path = typer.Option(Path("eval/results"), help="Output folder"),
+) -> None:
+    """Run contrast pairs and write metrics JSON, a summary and plots."""
+    load_env()
+    from memgate.evaluation import metrics, run_pairs, write_plots
+    from memgate.judges.recorded import bundled_fixture_path as fixture_path
+    from memgate.reporting import summary_markdown
+
+    pol = get_policy(policy)
+    pair_path = pairs or bundled_pairs_path(pol.name)
+    if pair_path is None:
+        raise fail(f"no bundled pairs for '{pol.name}'; pass --pairs")
+    cases = load_pairs(pair_path)
+    j = make_judge(judge, pol, fixtures)
+    evals = asyncio.run(run_pairs(pol, j, cases))
+    fx = (fixtures or fixture_path(pol.name)) if judge == "recorded" else None
+    model = next((c.decision.model for c in evals if c.decision.model), None)
+    result = metrics(pol, evals, j.name, model, fx)
+    result["pairs_file"] = str(pair_path.name)
+    dest = out / pol.name
+    dest.mkdir(parents=True, exist_ok=True)
+    if result["calls"].get("synthetic"):
+        print("warning: synthetic fixtures; these numbers are not evidence and must not be "
+              "reported", file=sys.stderr)
+    (dest / "metrics.json").write_text(json.dumps(result, indent=1) + "\n", encoding="utf-8")
+    (dest / "summary.md").write_text(summary_markdown(result), encoding="utf-8")
+    plots = write_plots(result, dest)
+    print(f"{pol.name} v{pol.version} on {result['cases']} cases ({model}): accuracy "
+          f"{result['accuracy']:.3f}, pair consistency {result['pair_consistency']:.3f}, "
+          f"judge errors {result['judge_errors']}")
+    print(f"wrote {dest / 'metrics.json'}, {dest / 'summary.md'} and {len(plots)} plot(s)")
+
+
 def main() -> None:
     """Console-script entry point."""
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")

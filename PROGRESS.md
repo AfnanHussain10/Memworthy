@@ -87,7 +87,21 @@ Not done from the PRD's week 3: "running on Cortex" (the author's own project) i
 
 ## Milestone 5: evaluation
 
-- [ ] Contrast-pair metrics, calibration, plots in `eval/results/`
+- [x] Contrast pairs: `personal-memory` 272 cases / 125 pairs, `dev-sessions` 236 cases / 118 pairs, recorded from live Jev
+- [x] `memgate eval`: accuracy by category, pair consistency, confusion, calibration (reliability, ECE, CV temperature scaling), latency, cost, failure list
+- [x] Results committed to `eval/results/` with the model version (`jev-1.13.0`); run 1 before pair-file corrections kept
+- [ ] LongMemEval with/without comparison: runner done and tested offline; **pending real run** (extractor model rate-limited, free-tier key); command in `eval/results/longmemeval/README.md`
+
+**Acceptance (clean copy):**
+
+| Check | Result |
+| --- | --- |
+| `memgate eval personal-memory` | 272 cases: accuracy 0.974, pair consistency 0.944, 0 judge errors; metrics.json, summary.md, 4 plots |
+| `memgate eval dev-sessions` | 236 cases: accuracy 0.915, pair consistency 0.839, 0 judge errors; metrics.json, summary.md, 6 plots |
+| Results in `eval/results/` with model version | `jev-1.13.0` in both metrics.json; a clean-copy rerun reproduces the committed numbers |
+| `pytest -q`, `mypy src`, `ruff check` | 260 passed; clean (45 files) |
+
+**Headline numbers (real, held out):** `personal-memory` 97.4% action accuracy, 94.4% pair consistency (targets 90% / 85%: met). `dev-sessions` 91.5% accuracy, 83.9% pair consistency (pair consistency misses 85%). Median Jev latency about 1 s (misses the 500 ms target). Run 1 before pair corrections: 94.5% / 88.1% and 87.3% / 75.4%.
 
 ## Milestone 6: playground and launch
 

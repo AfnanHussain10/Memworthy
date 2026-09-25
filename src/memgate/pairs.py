@@ -28,6 +28,7 @@ class PairCase:
     pair_id: str
     category: str
     template: int
+    calibrate: dict[str, Any] | None = None
 
 
 def _fields(template: str) -> list[str]:
@@ -54,13 +55,16 @@ def expand_pairs(items: list[dict[str, Any]], source: str = "<pairs>") -> list[P
         fills: dict[str, list[str]] = {k: [str(x) for x in v]
                                        for k, v in (item.get("fills") or {}).items()}
         category = str(item.get("category", f"template_{ti}"))
+        calibrate = item.get("calibrate")
         keys = list(fills)
         for combo in itertools.product(*(fills[k] for k in keys)):
             base = dict(zip(keys, combo, strict=True))
-            pair_id = f"{ti}:" + "|".join(combo)
-            for case in item["cases"]:
+            for ci, case in enumerate(item["cases"]):
+                # Cases sharing a fill combination form one pair, unless `pair` groups them.
+                group = case.get("pair", "")
+                pair_id = f"{ti}:" + "|".join(combo) + (f"#{group}" if group != "" else "")
                 values = {**base, **{k: str(v) for k, v in case.items()
-                                     if k not in ("expect", *CASE_FIELDS)}}
+                                     if k not in ("expect", "pair", *CASE_FIELDS)}}
                 missing = [f for f in _fields(template) if f not in values]
                 if missing:
                     raise PairError(f"{source}: template {ti} has no value for {missing}")
@@ -69,7 +73,9 @@ def expand_pairs(items: list[dict[str, Any]], source: str = "<pairs>") -> list[P
                 for f in CASE_FIELDS:
                     if f in case or f in item:
                         fields[f] = _fmt(case.get(f, item.get(f)), values)
-                out.append(PairCase(PolicyTest.model_validate(fields), pair_id, category, ti))
+                out.append(PairCase(PolicyTest.model_validate(fields), pair_id, category, ti,
+                                    calibrate))
+                del ci
     return out
 
 

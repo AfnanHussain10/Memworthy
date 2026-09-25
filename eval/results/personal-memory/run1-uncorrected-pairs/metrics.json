@@ -1,0 +1,407 @@
+{
+ "policy": "personal-memory",
+ "policy_version": "1.1",
+ "judge": "recorded",
+ "model": "jev-1.13.0",
+ "generated_at": "2026-09-25T12:30:46.702868+00:00",
+ "cases": 274,
+ "pairs": 126,
+ "accuracy": 0.9452554744525548,
+ "pair_consistency": 0.8809523809523809,
+ "judge_errors": 0,
+ "categories": {
+  "future_vs_past": {
+   "n": 30,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "hypothetical_vs_fact": {
+   "n": 26,
+   "accuracy": 0.7692307692307693,
+   "pair_consistency": 0.5384615384615384
+  },
+  "intent_vs_fact": {
+   "n": 36,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "noise": {
+   "n": 7,
+   "accuracy": 1.0,
+   "pair_consistency": null
+  },
+  "preference": {
+   "n": 14,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "retraction": {
+   "n": 9,
+   "accuracy": 1.0,
+   "pair_consistency": null
+  },
+  "sensitive": {
+   "n": 18,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "source_role": {
+   "n": 22,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "temporary_vs_durable": {
+   "n": 50,
+   "accuracy": 0.98,
+   "pair_consistency": 0.96
+  },
+  "update_vs_new": {
+   "n": 24,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "user_vs_third_party": {
+   "n": 38,
+   "accuracy": 0.7894736842105263,
+   "pair_consistency": 0.5789473684210527
+  }
+ },
+ "confusion": {
+  "reject -> reject": 107,
+  "review -> reject": 7,
+  "review -> review": 24,
+  "store -> reject": 6,
+  "store -> review": 2,
+  "store -> store": 111,
+  "supersede -> supersede": 5,
+  "update -> update": 12
+ },
+ "calibration": {
+  "about_subject": {
+   "n": 38,
+   "positives": 19,
+   "ece_before": 0.11789473684210525,
+   "ece_after_cv": 3.60054818996129e-05,
+   "temperature_all": 0.07689105058141953,
+   "reliability_before": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 6,
+     "confidence": 0.07333333333333333,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.1,
+     "hi": 0.2,
+     "n": 5,
+     "confidence": 0.126,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.2,
+     "hi": 0.3,
+     "n": 6,
+     "confidence": 0.255,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.3,
+     "hi": 0.4,
+     "n": 2,
+     "confidence": 0.315,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 19,
+     "confidence": 0.9342105263157895,
+     "accuracy": 1
+    }
+   ],
+   "reliability_after_cv": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 19,
+     "confidence": 7.201089425652087e-05,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 19,
+     "confidence": 0.9999999999304573,
+     "accuracy": 1
+    }
+   ]
+  },
+  "durable": {
+   "n": 100,
+   "positives": 50,
+   "ece_before": 0.1651,
+   "ece_after_cv": 9.934535871703605e-06,
+   "temperature_all": 0.049787068367907104,
+   "reliability_before": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 14,
+     "confidence": 0.07285714285714286,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.1,
+     "hi": 0.2,
+     "n": 11,
+     "confidence": 0.12454545454545456,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.2,
+     "hi": 0.3,
+     "n": 12,
+     "confidence": 0.2683333333333333,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.3,
+     "hi": 0.4,
+     "n": 11,
+     "confidence": 0.3290909090909091,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.4,
+     "hi": 0.5,
+     "n": 2,
+     "confidence": 0.405,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.8,
+     "n": 6,
+     "confidence": 0.775,
+     "accuracy": 1
+    },
+    {
+     "lo": 0.8,
+     "hi": 0.9,
+     "n": 28,
+     "confidence": 0.8678571428571429,
+     "accuracy": 1
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 16,
+     "confidence": 0.91125,
+     "accuracy": 1
+    }
+   ],
+   "reliability_after_cv": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 50,
+     "confidence": 1.9869028911335988e-05,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 50,
+     "confidence": 0.9999999999571679,
+     "accuracy": 1
+    }
+   ]
+  },
+  "retraction": {
+   "n": 9,
+   "positives": 5,
+   "ece_before": 0.0566666666666667,
+   "ece_after_cv": 4.43000989015076e-05,
+   "temperature_all": 0.2651773393587535,
+   "reliability_before": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 4,
+     "confidence": 0.0575,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 5,
+     "confidence": 0.944,
+     "accuracy": 1
+    }
+   ],
+   "reliability_after_cv": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 4,
+     "confidence": 3.628666031320348e-05,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 5,
+     "confidence": 0.9999492891502278,
+     "accuracy": 1
+    }
+   ]
+  }
+ },
+ "calls": {
+  "recorded_calls": 379,
+  "synthetic": false,
+  "latency_ms_median": 998,
+  "latency_ms_p90": 1079,
+  "input_tokens_median": 645,
+  "cost_usd_per_candidate_median": 2.7090000000000003e-05
+ },
+ "failures": [
+  {
+   "input": "Since I live in Vienna, what would I do on weekends?",
+   "category": "hypothetical_vs_fact",
+   "expected": "store",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "intent",
+   "error": null
+  },
+  {
+   "input": "Since I live in Auckland, what would I do on weekends?",
+   "category": "hypothetical_vs_fact",
+   "expected": "store",
+   "got": "reject",
+   "rule": "low_durability",
+   "type": "fact",
+   "error": null
+  },
+  {
+   "input": "Since I live in Dublin, what would I do on weekends?",
+   "category": "hypothetical_vs_fact",
+   "expected": "store",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "intent",
+   "error": null
+  },
+  {
+   "input": "Since I live in Kyoto, what would I do on weekends?",
+   "category": "hypothetical_vs_fact",
+   "expected": "store",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "intent",
+   "error": null
+  },
+  {
+   "input": "Since I live in Madrid, what would I do on weekends?",
+   "category": "hypothetical_vs_fact",
+   "expected": "store",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "intent",
+   "error": null
+  },
+  {
+   "input": "Since I live in Prague, what would I do on weekends?",
+   "category": "hypothetical_vs_fact",
+   "expected": "store",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "intent",
+   "error": null
+  },
+  {
+   "input": "I is allergic to peanuts",
+   "category": "user_vs_third_party",
+   "expected": "store",
+   "got": "review",
+   "rule": "sensitive",
+   "type": "fact",
+   "error": null
+  },
+  {
+   "input": "Hassan is training for a marathon",
+   "category": "user_vs_third_party",
+   "expected": "review",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "temporary",
+   "error": null
+  },
+  {
+   "input": "Maria is training for a marathon",
+   "category": "user_vs_third_party",
+   "expected": "review",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "temporary",
+   "error": null
+  },
+  {
+   "input": "Kenji is training for a marathon",
+   "category": "user_vs_third_party",
+   "expected": "review",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "temporary",
+   "error": null
+  },
+  {
+   "input": "Fatima is training for a marathon",
+   "category": "user_vs_third_party",
+   "expected": "review",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "temporary",
+   "error": null
+  },
+  {
+   "input": "Lucas is training for a marathon",
+   "category": "user_vs_third_party",
+   "expected": "review",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "temporary",
+   "error": null
+  },
+  {
+   "input": "Aisha is training for a marathon",
+   "category": "user_vs_third_party",
+   "expected": "review",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "temporary",
+   "error": null
+  },
+  {
+   "input": "Tom is training for a marathon",
+   "category": "user_vs_third_party",
+   "expected": "review",
+   "got": "reject",
+   "rule": "not_memory",
+   "type": "temporary",
+   "error": null
+  },
+  {
+   "input": "I have owned a house for ten years in Geneva",
+   "category": "temporary_vs_durable",
+   "expected": "store",
+   "got": "review",
+   "rule": "sensitive",
+   "type": "fact",
+   "error": null
+  }
+ ],
+ "pairs_file": "personal-memory.yaml"
+}

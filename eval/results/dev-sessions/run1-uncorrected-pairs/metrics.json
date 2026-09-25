@@ -1,0 +1,668 @@
+{
+ "policy": "dev-sessions",
+ "policy_version": "1.1",
+ "judge": "recorded",
+ "model": "jev-1.13.0",
+ "generated_at": "2026-09-25T12:31:05.995664+00:00",
+ "cases": 236,
+ "pairs": 118,
+ "accuracy": 0.8728813559322034,
+ "pair_consistency": 0.7542372881355932,
+ "judge_errors": 0,
+ "categories": {
+  "abandoned_vs_final": {
+   "n": 6,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "concluded_vs_open": {
+   "n": 24,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "endorsed_vs_proposed": {
+   "n": 52,
+   "accuracy": 0.7115384615384616,
+   "pair_consistency": 0.46153846153846156
+  },
+  "grounded_vs_ungrounded": {
+   "n": 52,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "noise_vs_work": {
+   "n": 8,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "project_vs_generic": {
+   "n": 10,
+   "accuracy": 0.7,
+   "pair_consistency": 0.4
+  },
+  "secret_vs_clean": {
+   "n": 24,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "supersede_vs_new": {
+   "n": 8,
+   "accuracy": 1.0,
+   "pair_consistency": 1.0
+  },
+  "verified_vs_unverified": {
+   "n": 52,
+   "accuracy": 0.7692307692307693,
+   "pair_consistency": 0.5384615384615384
+  }
+ },
+ "confusion": {
+  "redact -> redact": 12,
+  "reject -> reject": 13,
+  "review -> review": 12,
+  "review/store_labeled -> store": 14,
+  "store -> reject": 1,
+  "store -> store": 113,
+  "store -> store_labeled": 3,
+  "store_labeled -> reject": 12,
+  "store_labeled -> store_labeled": 52,
+  "supersede -> supersede": 4
+ },
+ "calibration": {
+  "concluded": {
+   "n": 12,
+   "positives": 0,
+   "ece_before": 0.04666666666666667,
+   "ece_after_cv": 8.271908789253654e-05,
+   "temperature_all": 0.31969187142203653,
+   "reliability_before": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 12,
+     "confidence": 0.04666666666666667,
+     "accuracy": 0
+    }
+   ],
+   "reliability_after_cv": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 12,
+     "confidence": 8.271908789253654e-05,
+     "accuracy": 0
+    }
+   ]
+  },
+  "endorsed": {
+   "n": 52,
+   "positives": 26,
+   "ece_before": 0.2603846153846154,
+   "ece_after_cv": 0.2832208930894494,
+   "temperature_all": 2.111007228029919,
+   "reliability_before": [
+    {
+     "lo": 0.1,
+     "hi": 0.2,
+     "n": 5,
+     "confidence": 0.156,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.2,
+     "hi": 0.3,
+     "n": 7,
+     "confidence": 0.22714285714285715,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.8,
+     "hi": 0.9,
+     "n": 11,
+     "confidence": 0.8781818181818182,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 29,
+     "confidence": 0.9486206896551724,
+     "accuracy": 0.896551724137931
+    }
+   ],
+   "reliability_after_cv": [
+    {
+     "lo": 0.2,
+     "hi": 0.3,
+     "n": 1,
+     "confidence": 0.2856367814100343,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.3,
+     "hi": 0.4,
+     "n": 11,
+     "confidence": 0.34305473116446633,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.6,
+     "hi": 0.7,
+     "n": 1,
+     "confidence": 0.6838393721208897,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.8,
+     "n": 23,
+     "confidence": 0.7501116597074847,
+     "accuracy": 0.43478260869565216
+    },
+    {
+     "lo": 0.8,
+     "hi": 0.9,
+     "n": 16,
+     "confidence": 0.829259995560052,
+     "accuracy": 1
+    }
+   ]
+  },
+  "project_specific": {
+   "n": 7,
+   "positives": 2,
+   "ece_before": 0.12285714285714286,
+   "ece_after_cv": 8.166071530248223e-05,
+   "temperature_all": 0.14385351108676933,
+   "reliability_before": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 3,
+     "confidence": 0.06666666666666667,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.1,
+     "hi": 0.2,
+     "n": 2,
+     "confidence": 0.14,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.8,
+     "n": 1,
+     "confidence": 0.79,
+     "accuracy": 1
+    },
+    {
+     "lo": 0.8,
+     "hi": 0.9,
+     "n": 1,
+     "confidence": 0.83,
+     "accuracy": 1
+    }
+   ],
+   "reliability_after_cv": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 5,
+     "confidence": 2.0165907695023146e-05,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 2,
+     "confidence": 0.9997646022656789,
+     "accuracy": 1
+    }
+   ]
+  },
+  "superseded_later": {
+   "n": 6,
+   "positives": 3,
+   "ece_before": 0.13166666666666665,
+   "ece_after_cv": 9.604527960981537e-05,
+   "temperature_all": 0.164637124434218,
+   "reliability_before": [
+    {
+     "lo": 0.1,
+     "hi": 0.2,
+     "n": 3,
+     "confidence": 0.15,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.8,
+     "hi": 0.9,
+     "n": 1,
+     "confidence": 0.82,
+     "accuracy": 1
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 2,
+     "confidence": 0.92,
+     "accuracy": 1
+    }
+   ],
+   "reliability_after_cv": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 3,
+     "confidence": 8.559037917974949e-05,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 3,
+     "confidence": 0.9998934998199601,
+     "accuracy": 1
+    }
+   ]
+  },
+  "worth_keeping": {
+   "n": 8,
+   "positives": 3,
+   "ece_before": 0.28625,
+   "ece_after_cv": 0.001361728371258972,
+   "temperature_all": 0.049787068367907104,
+   "reliability_before": [
+    {
+     "lo": 0.1,
+     "hi": 0.2,
+     "n": 1,
+     "confidence": 0.17,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.2,
+     "hi": 0.3,
+     "n": 1,
+     "confidence": 0.28,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.3,
+     "hi": 0.4,
+     "n": 2,
+     "confidence": 0.35,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.4,
+     "hi": 0.5,
+     "n": 1,
+     "confidence": 0.43,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.6,
+     "hi": 0.7,
+     "n": 1,
+     "confidence": 0.69,
+     "accuracy": 1
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.8,
+     "n": 1,
+     "confidence": 0.78,
+     "accuracy": 1
+    },
+    {
+     "lo": 0.8,
+     "hi": 0.9,
+     "n": 1,
+     "confidence": 0.82,
+     "accuracy": 1
+    }
+   ],
+   "reliability_after_cv": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "n": 5,
+     "confidence": 0.0021787441024393854,
+     "accuracy": 0
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 3,
+     "confidence": 0.9999999645140417,
+     "accuracy": 1
+    }
+   ]
+  }
+ },
+ "calls": {
+  "recorded_calls": 364,
+  "synthetic": false,
+  "latency_ms_median": 1013.0,
+  "latency_ms_p90": 1140,
+  "input_tokens_median": 682.0,
+  "cost_usd_per_candidate_median": 2.8644000000000002e-05
+ },
+ "failures": [
+  {
+   "input": "Changed the retry limit to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "fix",
+   "error": null
+  },
+  {
+   "input": "Changed the connection timeout to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "fix",
+   "error": null
+  },
+  {
+   "input": "Changed the batch size to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "task",
+   "error": null
+  },
+  {
+   "input": "Changed the lock order to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "fix",
+   "error": null
+  },
+  {
+   "input": "Changed the default page size to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "fix",
+   "error": null
+  },
+  {
+   "input": "Changed the image resize filter to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "fix",
+   "error": null
+  },
+  {
+   "input": "Changed the upload chunk size to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "fix",
+   "error": null
+  },
+  {
+   "input": "Changed the worker concurrency to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "task",
+   "error": null
+  },
+  {
+   "input": "Changed the DNS cache TTL to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "task",
+   "error": null
+  },
+  {
+   "input": "Changed the request body limit to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "fix",
+   "error": null
+  },
+  {
+   "input": "Changed the S3 multipart threshold to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "fix",
+   "error": null
+  },
+  {
+   "input": "Changed the gzip level to fix the flaky upload",
+   "category": "verified_vs_unverified",
+   "expected": "store_labeled",
+   "got": "reject",
+   "rule": "noise",
+   "type": "task",
+   "error": null
+  },
+  {
+   "input": "Decided to use SQLite for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use Redis streams for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use a cron job for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": "store",
+   "got": "reject",
+   "rule": "noise",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use a cron job for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use server-side rendering for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use feature flags for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use a message queue for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use UUIDv7 keys for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use a read replica for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use OpenTelemetry tracing for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use a monorepo for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use htmx for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use a CDN cache for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use row-level security for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "Decided to use event sourcing for the new service.",
+   "category": "endorsed_vs_proposed",
+   "expected": [
+    "review",
+    "store_labeled"
+   ],
+   "got": "store",
+   "rule": "rules[9]",
+   "type": "decision",
+   "error": null
+  },
+  {
+   "input": "In this repo, order IDs are ULIDs so they sort by creation time.",
+   "category": "project_vs_generic",
+   "expected": "store",
+   "got": "store_labeled",
+   "rule": "ungrounded",
+   "type": "explanation",
+   "error": null
+  },
+  {
+   "input": "Our API returns 409 when two clients edit the same draft, and the client retries once.",
+   "category": "project_vs_generic",
+   "expected": "store",
+   "got": "store_labeled",
+   "rule": "ungrounded",
+   "type": "explanation",
+   "error": null
+  },
+  {
+   "input": "Our search index is rebuilt nightly because incremental updates missed deletions.",
+   "category": "project_vs_generic",
+   "expected": "store",
+   "got": "store_labeled",
+   "rule": "unverified_work",
+   "type": "fix",
+   "error": null
+  }
+ ],
+ "pairs_file": "dev-sessions.yaml"
+}

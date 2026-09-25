@@ -1,0 +1,176 @@
+# Contrast pairs for dev-sessions. One changed detail (an outcome, a file read, a user reply)
+# flips the correct action. Wording differs from the built-in tests so this is a held-out set.
+# `calibrate` names the noul signal whose probability should track the positive action(s).
+- template: "Fixed the {bug}; {how}"
+  category: verified_vs_unverified
+  fills:
+    bug: ["crash when a playlist is empty", "wrong totals on the invoice page",
+          "duplicate emails on signup", "slow startup caused by eager imports",
+          "broken pagination on the search API", "stale cache after a profile edit",
+          "timezone drift in the scheduler", "memory leak in the export worker",
+          "404 on the password reset link", "race condition in the order counter",
+          "missing thumbnails for PNG uploads", "double charge on retried payments",
+          "blank PDF receipts", "wrong locale on the settings page"]
+  context: "User: fix the {bug}\nAssistant: Found the cause and patched it."
+  cases:
+    - {how: "the test suite passes", metadata: {outcome: tests_passed}, expect: store}
+    - {how: "not tested yet", metadata: {outcome: unknown}, expect: store_labeled}
+
+- template: "Changed {change} to fix the {bug}"
+  category: verified_vs_unverified
+  fills:
+    change: ["the retry limit", "the connection timeout", "the batch size", "the lock order",
+             "the default page size", "the image resize filter", "the upload chunk size",
+             "the worker concurrency", "the DNS cache TTL", "the request body limit",
+             "the S3 multipart threshold", "the gzip level"]
+    bug: [flaky upload]
+  context: "User: the {bug} keeps happening\nAssistant: I changed {change}."
+  cases:
+    - {metadata: {outcome: committed}, expect: store}
+    - {metadata: {outcome: failed}, expect: store_labeled}
+
+- template: "{module} loads settings from config/app.toml and validates them before startup."
+  category: grounded_vs_ungrounded
+  fills:
+    module: [core/settings.py, app/config.py, server/boot.py, lib/env.py, svc/loader.py,
+             api/settings.py, worker/config.py, cli/bootstrap.py, jobs/setup.py,
+             web/settings.py, admin/config.py, sync/env.py, mail/config.py, auth/boot.py]
+  context: "User: where do settings come from?\nAssistant: {module} loads config/app.toml."
+  cases:
+    - {metadata: {files_read: ["{module}", config/app.toml],
+                  referenced_files: ["{module}", config/app.toml]}, expect: store}
+    - {metadata: {files_read: [], referenced_files: ["{module}", config/app.toml]},
+       expect: store_labeled}
+
+- template: "The {flow} is handled by {file}, which calls the payments client and records the result."
+  category: grounded_vs_ungrounded
+  fills:
+    flow: [refund flow, checkout flow, subscription renewal, invoice payment, payout job,
+           trial conversion, coupon redemption, plan upgrade, plan downgrade, dunning emails,
+           tax calculation, chargeback handling]
+    file: [billing/handlers.py]
+  context: "User: how does the {flow} work?\nAssistant: It's in {file}."
+  cases:
+    - {metadata: {files_read: ["{file}"], referenced_files: ["{file}"]}, expect: store}
+    - {metadata: {files_read: [README.md], referenced_files: ["{file}"]}, expect: store_labeled}
+
+# Corrected after run 1: the proposal side used to say "Decided to use", which contradicts
+# its own context; an extracted entry for a proposal says it was proposed.
+- template: "{verb} {choice} for {purpose}."
+  category: endorsed_vs_proposed
+  calibrate: {signal: endorsed, positive: [store]}
+  fills:
+    choice: [SQLite, Redis streams, a cron job, server-side rendering, feature flags,
+             a message queue, UUIDv7 keys, a read replica, OpenTelemetry tracing,
+             a monorepo, htmx, a CDN cache, row-level security, event sourcing]
+    purpose: [the new service]
+  cases:
+    - {verb: "Decided to use", context: "User: what should we use for {purpose}?\nAssistant: {choice}.\nUser: yes, go with {choice}",
+       expect: store}
+    - {verb: "Proposed using", context: "User: what should we use for {purpose}?\nAssistant: I suggest {choice}.\nUser: I'll think about it",
+       expect: [review, store_labeled]}
+
+- template: "Convention: {rule}"
+  category: endorsed_vs_proposed
+  calibrate: {signal: endorsed, positive: [store]}
+  fills:
+    rule: ["tests live next to the code they test", "every migration has a down step",
+           "API errors return a problem+json body", "no default exports in TypeScript files",
+           "logs are JSON lines", "config values come from environment variables only",
+           "every endpoint has an OpenAPI description", "dates are stored in UTC",
+           "commit messages reference a ticket id", "SQL lives in repository modules only",
+           "public functions have docstrings", "feature flags are removed within a month"]
+  cases:
+    - {context: "User: from now on, {rule}\nAssistant: Understood.", expect: store}
+    - {context: "User: any suggestions for conventions?\nAssistant: Maybe: {rule}.\nUser: not sure",
+       expect: review}
+
+- template: "{topic}: {outcome_text}"
+  category: concluded_vs_open
+  calibrate: {signal: concluded, positive: [store]}
+  fills:
+    topic: ["Caching for the reports page", "Moving images to object storage",
+            "Splitting the admin app", "Adding GraphQL", "Switching to pnpm workspaces",
+            "Dropping Python 3.9 support", "Adopting OpenTelemetry", "Adding a staging database",
+            "Rewriting the importer in Go", "Moving CI to self-hosted runners",
+            "Enabling strict TypeScript", "Archiving old tenants"]
+  cases:
+    - {outcome_text: "the team agreed to do it next sprint",
+       context: "User: should we do this?\nAssistant: Pros and cons...\nUser: agreed, let's do it next sprint",
+       expect: store}
+    - {outcome_text: "no decision yet, pros and cons listed",
+       context: "User: should we do this?\nAssistant: Pros and cons...\nUser: not sure, let's talk later",
+       expect: store_labeled}
+
+- template: "{fact}"
+  category: project_vs_generic
+  calibrate: {signal: project_specific, positive: [store]}
+  fills:
+    fact: ["x"]
+  cases:
+    - {pair: 0, fact: "In this repo, order IDs are ULIDs so they sort by creation time.", expect: store}
+    - {pair: 0, fact: "A ULID is a sortable 128-bit identifier.", expect: reject}
+    - {pair: 1, fact: "Our API returns 409 when two clients edit the same draft, and the client retries once.",
+       expect: store}
+    - {pair: 1, fact: "HTTP 409 means Conflict.", expect: reject}
+    - {pair: 2, fact: "In this project the worker reads jobs in batches of 50 because larger batches time out on Postgres.",
+       expect: store}
+    - {pair: 2, fact: "Batching reduces the number of database round trips.", expect: reject}
+    - {pair: 3, fact: "Our search index is rebuilt nightly because incremental updates missed deletions.",
+       expect: store}
+    - {pair: 3, fact: "A search index maps terms to documents.", expect: reject}
+    - {pair: 4, fact: "This codebase keeps money in integer cents to avoid float rounding.", expect: store}
+    - {pair: 4, fact: "Floating-point numbers cannot represent 0.1 exactly.", expect: reject}
+
+- template: "{text}"
+  category: noise_vs_work
+  calibrate: {signal: worth_keeping, positive: [store]}
+  fills:
+    text: ["x"]
+  cases:
+    - {pair: 0, text: "Ran the linter; no issues.", context: "User: lint it\nTool Bash: ruff check .\nAll checks passed!", expect: reject}
+    - {pair: 0, text: "Added a linter rule banning print statements in library code.", context: "User: ban prints in the library\nTool Edit: pyproject.toml\nTool Bash: ruff check .\nAll checks passed!", metadata: {outcome: build_passed}, expect: store}
+    - {pair: 1, text: "Pulled the latest main branch.", context: "User: pull main\nTool Bash: git pull\nAlready up to date.", expect: reject}
+    - {pair: 1, text: "Merged the latest main and resolved the conflict in the settings loader by keeping both env keys.", context: "User: merge main\nTool Bash: git merge main\nCONFLICT in settings.py\nTool Edit: settings.py\nTool Bash: git commit -m merge", metadata: {outcome: committed}, expect: store}
+    - {pair: 2, text: "Opened a shell in the container.", context: "User: open a shell\nTool Bash: docker exec -it app sh", expect: reject}
+    - {pair: 2, text: "Added a healthcheck to the container so the orchestrator restarts it when the API hangs.", context: "User: the container hangs sometimes\nTool Edit: Dockerfile\nTool Bash: docker build .\nSuccessfully built", metadata: {outcome: build_passed}, expect: store}
+    - {pair: 3, text: "Said good morning.", context: "User: good morning!\nAssistant: Good morning!", expect: reject}
+    - {pair: 3, text: "Printed the environment variables.", context: "User: show env\nTool Bash: env | sort", expect: reject}
+
+- template: "{text}"
+  category: abandoned_vs_final
+  calibrate: {signal: superseded_later, positive: [reject]}
+  fills:
+    text: ["x"]
+  cases:
+    - {pair: 0, text: "Added a polling loop that checks the job status every second.", context: "User: show job progress\nTool Edit: web/jobs.ts (setInterval)\nUser: polling is too heavy, use websockets instead\nTool Edit: web/jobs.ts (WebSocket)", expect: reject}
+    - {pair: 0, text: "Switched job progress updates to a websocket after polling proved too heavy.", context: "User: show job progress\nTool Edit: web/jobs.ts (setInterval)\nUser: polling is too heavy, use websockets instead\nTool Edit: web/jobs.ts (WebSocket)", metadata: {outcome: tests_passed}, expect: store}
+    - {pair: 1, text: "Wrote a custom YAML parser for the config loader.", context: "User: parse the config\nTool Edit: config/parse.py (custom parser)\nUser: no, just use pyyaml\nTool Edit: config/parse.py (yaml.safe_load)", expect: reject}
+    - {pair: 1, text: "Parsed the config with yaml.safe_load after dropping the custom parser.", context: "User: parse the config\nTool Edit: config/parse.py (custom parser)\nUser: no, just use pyyaml\nTool Edit: config/parse.py (yaml.safe_load)", metadata: {outcome: tests_passed}, expect: store}
+    - {pair: 2, text: "Stored sessions in a global dictionary.", context: "User: add sessions\nTool Edit: auth/sessions.py (dict)\nUser: that breaks with two workers, move them to redis\nTool Edit: auth/sessions.py (redis)", expect: reject}
+    - {pair: 2, text: "Moved session storage to Redis so sessions survive across workers.", context: "User: add sessions\nTool Edit: auth/sessions.py (dict)\nUser: that breaks with two workers, move them to redis\nTool Edit: auth/sessions.py (redis)", metadata: {outcome: tests_passed}, expect: store}
+
+- template: "Configured the {service} client with {credential}."
+  category: secret_vs_clean
+  fills:
+    service: [mail, storage, analytics, payments, search, maps, SMS, push notification,
+              geocoding, translation, CDN, error tracking]
+  metadata: {outcome: committed}
+  cases:
+    - {credential: "the key sk-proj-Qa1Ws2Ed3Rf4Tg5Yh6Uj7Ik8", expect: redact}
+    - {credential: "a key read from an environment variable", expect: store}
+
+- template: "{text}"
+  category: supersede_vs_new
+  fills:
+    text: ["x"]
+  metadata: {outcome: committed}
+  cases:
+    - {pair: 0, text: "Decided to run background jobs with RQ instead of Celery.", existing: ["Decided to run background jobs with Celery."], expect: supersede}
+    - {pair: 0, text: "Decided to send transactional email through a queue worker.", existing: ["Decided to run background jobs with Celery."], expect: store}
+    - {pair: 1, text: "Convention: format TypeScript with Biome instead of Prettier.", existing: ["Convention: format TypeScript with Prettier."], expect: supersede}
+    - {pair: 1, text: "Convention: name React components in PascalCase.", existing: ["Convention: format TypeScript with Prettier."], expect: store}
+    - {pair: 2, text: "Decided to store uploads in object storage rather than on the app server's disk.", existing: ["Decided to store uploads on the app server's disk."], expect: supersede}
+    - {pair: 2, text: "Decided to resize uploaded images to three widths.", existing: ["Decided to store uploads on the app server's disk."], expect: store}
+    - {pair: 3, text: "Decided to deploy with blue-green releases instead of rolling restarts.", existing: ["Decided to deploy with rolling restarts."], expect: supersede}
+    - {pair: 3, text: "Decided to run database migrations before each deploy.", existing: ["Decided to deploy with rolling restarts."], expect: store}

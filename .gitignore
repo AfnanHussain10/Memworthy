@@ -29,3 +29,7 @@ node_modules/
 .DS_Store
 .remember/
 
+
+# LongMemEval run artifacts (cache, per-question rows); only README.md is tracked
+/eval/results/longmemeval/*
+!/eval/results/longmemeval/README.md
