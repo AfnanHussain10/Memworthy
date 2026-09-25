@@ -1,0 +1,166 @@
+# Contrast pairs for personal-memory. In each pair one changed phrase flips the correct
+# action; labels come from the template, not from a judge. Wording deliberately differs
+# from the policy's built-in tests so the pairs act as a held-out set.
+- template: "I {verb} {city}"
+  category: temporary_vs_durable
+  fills: {city: [Lahore, Nairobi, Lisbon, Seoul, Montreal, Cairo, Oslo, Lima, Denver, Tunis]}
+  cases:
+    - {verb: "have lived in", expect: store}
+    - {verb: "am on holiday in", expect: reject}
+
+- template: "I {verb} as a {job}"
+  category: temporary_vs_durable
+  fills: {job: [pharmacist, carpenter, lawyer, dentist, chef, pilot, librarian, architect]}
+  cases:
+    - {verb: "have a permanent job", expect: store}
+    - {verb: "am filling in today", expect: reject}
+
+- template: "I {verb} a {thing}"
+  category: intent_vs_fact
+  fills: {thing: [motorbike, piano, sailboat, horse, camper van, telescope, 3D printer, kayak,
+                  drone]}
+  cases:
+    - {verb: "own", expect: store}
+    - {verb: "am thinking about getting", expect: reject}
+
+- template: "I {verb} {language}"
+  category: intent_vs_fact
+  fills: {language: [Portuguese, Mandarin, Turkish, Swahili, Korean, Hindi, Dutch, Polish,
+                     Farsi]}
+  cases:
+    - {verb: "am fluent in", expect: store}
+    - {verb: "might start learning", expect: reject}
+
+- template: "{prefix} a {job}"
+  category: hypothetical_vs_fact
+  fills: {job: [surgeon, firefighter, journalist, plumber, physicist, farmer, diplomat]}
+  cases:
+    - {prefix: "I am", expect: store}
+    - {prefix: "If I were ever to become", expect: reject}
+
+- template: "{prefix} {city}, what would I do on weekends?"
+  category: hypothetical_vs_fact
+  fills: {city: [Vienna, Auckland, Dublin, Kyoto, Madrid, Prague]}
+  cases:
+    - {prefix: "Suppose I lived in", expect: reject}
+    - {prefix: "Since I live in", expect: store}
+
+- template: "{who} {fact}"
+  category: user_vs_third_party
+  fills: {fact: ["works as an accountant", "is allergic to peanuts", "plays chess every day",
+                 "lives in Manchester", "is a vegan", "speaks fluent Greek", "coaches football"]}
+  cases:
+    - {who: "I", expect: store}
+    - {who: "My cousin", expect: review}
+
+- template: "{who} {fact}"
+  category: user_vs_third_party
+  fills: {fact: ["love gardening", "hate crowded places", "enjoy baking bread",
+                 "collect vintage stamps", "cycle to work"]}
+  cases:
+    - {who: "I", expect: store}
+    - {who: "My colleague and her husband", expect: review}
+
+- template: "{text}"
+  category: source_role
+  fills: {text: ["I live in Doha", "I am a vegetarian", "I work as a nurse",
+                 "I prefer email over phone calls", "My brother is called Sami",
+                 "I have three children"]}
+  cases:
+    - {role: user, expect: store}
+    - {role: assistant, expect: reject}
+
+- template: "The user {fact}"
+  category: source_role
+  fills: {fact: ["lives in Perth", "likes jazz", "is a teacher", "drives an electric car",
+                 "prefers short answers"]}
+  cases:
+    - {role: tool, expect: reject}
+    - {role: system, expect: reject}
+
+- template: "I {when} to {city}"
+  category: future_vs_past
+  fills: {city: [Muscat, Amman, Tbilisi, Hanoi, Accra, Bogota, Warsaw, Riga, Quito]}
+  cases:
+    - {when: "relocated for good two years ago", expect: store}
+    - {when: "am relocating next month", expect: reject}
+
+- template: "I {when} at {company}"
+  category: future_vs_past
+  fills: {company: [a hospital, a law firm, an airline, a university, a startup, a school]}
+  cases:
+    - {when: "have worked for five years", expect: store}
+    - {when: "start working next week", expect: reject}
+
+- template: "I {verb} {condition}"
+  category: sensitive
+  fills: {condition: [asthma, epilepsy, celiac disease, an anxiety disorder, high blood pressure,
+                      arthritis]}
+  cases:
+    - {verb: "was diagnosed with", expect: review}
+    - {verb: "am reading a book about", expect: reject}
+
+- template: "{text}"
+  category: sensitive
+  fills: {text: ["I earn 90,000 euros a year", "I am Catholic", "I have a mortgage of 300,000 dollars",
+                 "I am Hindu", "My bank balance is 12,000 pounds", "I am in therapy for PTSD"]}
+  cases:
+    - {expect: review}
+
+- template: "I {verb} {thing}"
+  category: preference
+  fills: {thing: [green tea, spicy curries, classical music, long walks, board games, sushi,
+                  cold weather]}
+  cases:
+    - {verb: "really love", expect: store}
+    - {verb: "am trying out", expect: reject}
+
+- template: "{text}"
+  category: noise
+  fills: {text: ["Hi there", "haha nice", "Can you translate this sentence?", "Thanks a lot!",
+                 "What time is it in Tokyo?", "brb", "Write me a haiku about rain"]}
+  cases:
+    - {expect: reject}
+
+- template: "I {verb} {city} now"
+  category: update_vs_new
+  fills: {city: [Bristol, Porto, Busan, Calgary, Casablanca, Krakow]}
+  cases:
+    - {verb: "moved away from Lagos and live in", existing: ["I live in Lagos"], expect: update}
+    - {verb: "also have a holiday flat in", existing: ["I play the violin"], expect: store}
+
+- template: "I {verb} {job}"
+  category: update_vs_new
+  fills: {job: [a paramedic, a veterinarian, a translator, an electrician, a tour guide,
+                a web developer]}
+  cases:
+    - {verb: "quit the bank and now work full time as", existing: ["I work as a bank teller"],
+       expect: update}
+    - {verb: "have a hobby of reading about the life of", existing: ["I work as a bank teller"],
+       expect: store}
+
+- template: "{prefix} I don't actually {fact}"
+  category: retraction
+  fills: {fact: ["have a sister", "own a car", "play tennis", "live in Cardiff", "speak Italian"]}
+  cases:
+    - {prefix: "Sorry, I got that wrong,", existing: ["I {fact}"], expect: supersede}
+
+- template: "I {fact}"
+  category: retraction
+  fills: {fact: ["have a sister", "own a car", "play tennis", "speak Italian"]}
+  cases:
+    - {existing: ["I work in marketing"], expect: store}
+
+- template: "{name} {verb}"
+  category: user_vs_third_party
+  fills: {name: [Hassan, Maria, Kenji, Fatima, Lucas, Aisha, Tom]}
+  cases:
+    - {verb: "is my husband", expect: store}
+    - {verb: "is training for a marathon", expect: review}
+
+- template: "I {verb} in {city}"
+  category: temporary_vs_durable
+  fills: {city: [Houston, Mumbai, Athens, Jakarta, Geneva, Havana, Dakar]}
+  cases:
+    - {verb: "have owned a house for ten years", expect: store}
+    - {verb: "am renting a room for the next three weeks", expect: reject}

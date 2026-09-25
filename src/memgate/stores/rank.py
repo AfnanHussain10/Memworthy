@@ -6,6 +6,10 @@ import math
 import re
 from collections import Counter
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from memgate.models import Candidate, Memory
 
 _WORD = re.compile(r"[a-z0-9]+(?:'[a-z]+)?")
 STOPWORDS = frozenset(
@@ -46,3 +50,14 @@ def bm25_rank(query: str, docs: Sequence[str], k: int, k1: float = 1.5,
             scores.append((i, s))
     scores.sort(key=lambda x: (-x[1], x[0]))
     return scores[:k]
+
+
+def shortlist(candidate: Candidate, pool: Sequence[Memory], k: int) -> list[Memory]:
+    """Up to ``k`` memories: BM25 matches on text plus context, then the most recently
+    updated others, so paraphrased conflicts ("I'm a teacher now") still reach the judge."""
+    query = f"{candidate.text}\n{candidate.context}"
+    ranked = [pool[i] for i, _ in bm25_rank(query, [m.text for m in pool], k)]
+    seen = {m.id for m in ranked}
+    recent = sorted((m for m in pool if m.id not in seen), key=lambda m: m.updated_at,
+                    reverse=True)
+    return (ranked + recent)[:k]

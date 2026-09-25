@@ -22,11 +22,16 @@ BOUNDED = [
     r"\buntil\b", r"\btill\b", r"\buntil the end of\b",
     r"\bthis (?:week|weekend|month|morning|afternoon|evening|summer|winter|spring|fall)\b",
     r"\b(?:today|tonight)\b", r"\bfor now\b", r"\bthrough (?:the )?(?:end|" + _WEEKDAY + r")\b",
-    rf"\bfor (?:the )?(?:next |coming )?{_NUM} {_UNIT}\b",
-    rf"\bfor (?:the )?(?:next|coming) {_UNIT}\b",
-    r"\bfor (?:a|the) (?:week|weekend|month|day|while)\b",
+    rf"\bfor (?:the )?(?:next|coming) (?:{_NUM} )?{_UNIT}\b",
     r"\b(?:temporarily|at the moment only)\b",
 ]
+# Plain durations ("for two weeks") bound a state only when it is not a present-perfect
+# span reaching up to now ("I've been a designer for six years").
+DURATION = [
+    rf"\bfor (?:the )?{_NUM} {_UNIT}\b",
+    r"\bfor (?:a|the) (?:week|weekend|month|day|while)\b",
+]
+PERFECT = r"\b(?:have|has|'ve|'s) (?:been|lived|had|worked|owned|known|used|played|studied)\b"
 FUTURE = [
     r"\btomorrow\b", rf"\bnext {_UNIT}\b", rf"\bnext {_WEEKDAY}\b", r"\bnext (?:summer|winter|"
     r"spring|fall|autumn|year)\b", rf"\bin {_NUM} {_UNIT}\b", r"\bsoon\b", r"\blater (?:today|"
@@ -103,6 +108,8 @@ def classify_timing(text: str, now: str | datetime | None = None) -> Timing:
     t = " ".join(text.lower().split())
     if _any(BOUNDED, t):
         return "bounded"
+    if _any(DURATION, t):
+        return "present" if re.search(PERFECT, t) else "bounded"
     if _any(FUTURE, t):
         return "future"
     if _any(PAST, t):

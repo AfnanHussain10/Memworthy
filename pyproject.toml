@@ -78,3 +78,6 @@ markers = [
   "live: real API calls; skipped unless keys are set",
 ]
 addopts = "-m 'not live'"
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["typer.Option", "typer.Argument"]

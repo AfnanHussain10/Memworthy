@@ -38,7 +38,9 @@ async def test_similar_filters_subject_and_uses_context() -> None:
     s = DictStore([mem("I live in Dubai", "a"), mem("Bob lives in Dubai", "b", "bob"),
                    mem("I like tea", "c")])
     c = Candidate.from_text("Actually only considering it", context="user: moved to Dubai")
-    assert [m.id for m in await s.similar(c, 5)] == ["a"]
+    # BM25 match first, then the subject's other memories; other subjects excluded.
+    assert [m.id for m in await s.similar(c, 5)] == ["a", "c"]
+    assert [m.id for m in await s.similar(c, 1)] == ["a"]
     assert [m.id for m in await s.all("bob")] == ["b"]
     assert len(await s.all()) == 3
 

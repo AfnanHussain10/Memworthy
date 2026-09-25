@@ -42,3 +42,19 @@ Where the tech spec, PRD and playground design are silent, MemGate takes the sim
 - **Chat context** is the previous three messages as `role: content` lines.
 - **`file_was_read`** returns false when the candidate references no files: there is nothing to ground it in.
 - **`Candidate.from_text`** convenience constructor, and sync `ingest_messages`/`ingest_sessions` wrappers on `Gate` (the PRD quickstart calls `gate.ingest_sessions`). **(spec updated)**
+
+## personal-memory template and fixtures (milestone 2)
+
+- **Tuning history, reported honestly.** The spec's starting template (v1.0) scored **106/120** on its own built-in tests with real Jev answers. Changes that took it to v1.1 (**124/124**, with four added negative-conflict tests):
+  - `date_parse` bug fix: "for six years" in a present-perfect sentence ("I've been a designer for six years") is a span up to now (`present`), not `bounded`.
+  - State template: earlier messages first as their own block, candidate labeled `New message` (measured: context after the candidate dropped `durable` for "I moved to Riyadh last week" from 0.68 to 0.28). **(spec updated)**
+  - `fact` and `relationship` descriptions no longer overlap ("family" moved to relationship).
+  - Prompts chosen with `eval/prompt_lab.py` by comparing variants across groups of tests: `durable` ("lasting fact, preference or relationship rather than a short-lived state or passing plan"), `about_subject` (mentions preferences and relationships), `retraction` ("walk back ... rather than report a new change"), and a conflict prompt that asks for the memory "about the same thing" and says to pick `none` when the message only adds.
+  - Thresholds: `about_subject < 0.5` (third-party max 0.17 vs own-life min 0.56 in the lab), `conflict.p > 0.6` (unrelated max 0.46 vs updates min 0.63).
+  - `sensitive` moved ahead of `low_durability`, so sensitive facts go to review (consent) even when the judge doubts their durability.
+  - A first attempt that reworded every prompt at once ("the candidate memory ...") dropped the score to 86/120; it was reverted. Wording sensitivity is real, as the PRD's risk table predicts.
+- **Built-in tests are tuning data, not evaluation.** Because the prompts were tuned against these tests, the 124/124 pass rate is not a quality claim. The contrast pairs in `templates/pairs/personal-memory.yaml` use different wording and serve as the held-out set (milestone 5).
+- **Conflict shortlist padding.** BM25 missed paraphrased conflicts ("I changed jobs, I'm a teacher now" vs "I work at a bank as an analyst"). `similar()` in local stores now returns BM25 matches first, then pads to `k` with the subject's most recently updated memories. **(spec updated)**
+- **Bundled demo script** `templates/demos/personal-memory.chat.json` (the four Dubai/Riyadh messages) is recorded into the same fixture file; the replay gives store, reject (temporary 0.99), update, and a rollback to Dubai.
+- **`memgate record INPUT`** accepts `tests`, `pairs`, a pair `.yaml`, a `.chat.json` script (messages gated in order with state carried between them) or a candidates `.json`/`.jsonl`; `--fresh` drops stale entries when prompts change.
+- **`memgate test --judge mock`** uses an unconfigured `MockJudge` (defaults only), so it exercises plumbing, not policy quality; CI uses `--judge recorded`.

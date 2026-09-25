@@ -1,0 +1,6 @@
+[
+  {"role": "user", "content": "I live in Dubai"},
+  {"role": "user", "content": "Flying to Riyadh tomorrow"},
+  {"role": "user", "content": "I moved to Riyadh last week"},
+  {"role": "user", "content": "Actually I'm only considering it"}
+]

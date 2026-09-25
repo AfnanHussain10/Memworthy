@@ -71,6 +71,7 @@ class FixtureFile:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(body, fh, indent=1, ensure_ascii=False)
             fh.write("\n")
+        os.chmod(tmp, 0o644)
         os.replace(tmp, self.path)
 
 

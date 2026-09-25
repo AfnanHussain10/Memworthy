@@ -273,7 +273,7 @@ def test_same_subject_runs_in_order_and_output_order_kept() -> None:
              Candidate.from_text("other", subject="bob")]
     ds = g.evaluate(cands)
     assert [d.candidate.text for d in ds] == ["first a", "second b", "other"]
-    assert order.index("Candidate memory: first a") < order.index("Candidate memory: second b")
+    assert order.index("New message: first a") < order.index("New message: second b")
 
 
 def test_evaluate_inside_loop_raises() -> None:
@@ -293,10 +293,13 @@ def test_render_state_and_questions() -> None:
                   metadata={"files_read": ["a.py", "b.py"], "outcome": "tests_passed",
                             "dependency_versions": {"pytest": "8.0"}, "timestamp": "x"})
     assert render_state(c) == (
+        "Earlier messages:\nuser: what test runner?\n\n"
         "Candidate memory: Uses pytest\nAbout: project\nSource: assistant message\n"
-        "Original message: We use pytest here\nContext: user: what test runner?\n"
+        "Original message: We use pytest here\n"
         "Episode outcome: tests_passed\nFiles read in session: a.py, b.py\n"
         "Dependency versions: pytest 8.0")
+    assert render_state(Candidate.from_text("hi")) == (
+        "New message: hi\nAbout: user\nSource: user message")
     p = load_policy_text(BASIC)
     qs = build_questions(p, [])
     assert qs[0].name == "type" and qs[0].options == dict(p.spec.types)

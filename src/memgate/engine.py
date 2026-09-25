@@ -92,13 +92,21 @@ def _top(probs: dict[str, float]) -> str | None:
 
 
 def render_state(c: Candidate) -> str:
-    """Plain-text state sent to the judge, in a fixed order with empty fields omitted."""
-    lines = [f"Candidate memory: {c.text}", f"About: {c.subject}",
-             f"Source: {c.source.role} message"]
-    if c.source.text and c.source.text.strip() != c.text.strip():
-        lines.append(f"Original message: {c.source.text}")
+    """Plain-text state sent to the judge, in a fixed order with empty fields omitted.
+
+    Earlier conversation comes first as its own block; the candidate is labeled
+    ``New message`` when it is the message itself, else ``Candidate memory`` followed by
+    the original message. (Measured on Jev: context placed after the candidate made
+    durable facts look short-lived.)
+    """
+    lines: list[str] = []
     if c.context:
-        lines.append(f"Context: {c.context}")
+        lines += ["Earlier messages:", c.context, ""]
+    is_message = not c.source.text or c.source.text.strip() == c.text.strip()
+    lines.append(f"New message: {c.text}" if is_message else f"Candidate memory: {c.text}")
+    lines += [f"About: {c.subject}", f"Source: {c.source.role} message"]
+    if not is_message:
+        lines.append(f"Original message: {c.source.text}")
     for key, label in METADATA_LINES.items():
         value = c.metadata.get(key)
         if value in (None, "", [], {}):

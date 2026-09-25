@@ -11,7 +11,7 @@ from memgate.stores.base import (
     superseding_memory,
     updated_memory,
 )
-from memgate.stores.rank import bm25_rank
+from memgate.stores.rank import shortlist
 
 
 class DictStore:
@@ -23,10 +23,9 @@ class DictStore:
         self.archive: dict[str, Memory] = {}
 
     async def similar(self, candidate: Candidate, k: int) -> list[Memory]:
-        """BM25 over memories of the same subject, querying text plus context."""
+        """BM25 over memories of the same subject, padded with the most recent ones."""
         pool = [m for m in self.memories.values() if m.subject == candidate.subject]
-        query = f"{candidate.text}\n{candidate.context}"
-        return [pool[i] for i, _ in bm25_rank(query, [m.text for m in pool], k)]
+        return shortlist(candidate, pool, k)
 
     async def all(self, subject: str | None = None) -> list[Memory]:
         """Current memories, oldest first."""
