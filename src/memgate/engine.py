@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import time
 from dataclasses import dataclass, field
@@ -137,6 +139,18 @@ def build_questions(policy: Policy, shortlist: list[Memory]) -> list[Question]:
     return qs
 
 
+def questions_hash(policy: Policy) -> str:
+    """Hash of everything the judge is asked, independent of the candidate."""
+    parts = {
+        "types": dict(policy.spec.types) if len(policy.spec.types) > 1 else {},
+        "signals": {n: s.model_dump(exclude={"applies_to"})
+                    for n, s in policy.model_signals.items()},
+        "conflict": policy.spec.conflict.prompt if policy.uses_conflict else None,
+    }
+    blob = json.dumps(parts, sort_keys=True).encode()
+    return hashlib.sha256(blob).hexdigest()[:16]
+
+
 def to_signal(name: str, kind: str, answer: Answer) -> SignalValue:
     """Convert a judge answer into a SignalValue."""
     return SignalValue(name=name, kind=kind, value=answer.value,
@@ -192,7 +206,7 @@ def finish_decision(policy: Policy, ctx: RuleContext, rule: CompiledRule, action
             patch = Patch(target_id=target.id, old_text=target.text, new_text=text)
     return Decision(
         candidate=ctx.candidate, action=action, type=ctx.type or "unknown",
-        signals=ctx.signals, rule=rule.id, labels=labels,
+        signals=ctx.signals, rule=rule.id, labels=labels, questions_hash=questions_hash(policy),
         target=target if action in NEEDS_TARGET else None, patch=patch,
         policy=policy.name, policy_version=policy.version, warnings=warnings, **fields)
 
@@ -296,6 +310,7 @@ class Engine:
         return Decision(
             candidate=ctx.candidate, action=self.policy.spec.on_error,
             type=ctx.type or "unknown", signals=ctx.signals, rule="on_error",
+            questions_hash=questions_hash(self.policy),
             labels=["redacted"] if extra.get("redacted_text") else [],
             policy=self.policy.name, policy_version=self.policy.version, error=error,
             model=None, latency_ms=_ms(start), **extra)

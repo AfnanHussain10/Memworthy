@@ -114,6 +114,7 @@ class Decision(_Frozen):
     model: str | None = None
     error: str | None = None
     warnings: list[str] = []
+    questions_hash: str | None = None
     latency_ms: int
     created_at: datetime = Field(default_factory=utcnow)
 

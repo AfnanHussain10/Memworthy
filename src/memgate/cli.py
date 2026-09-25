@@ -199,6 +199,104 @@ async def _record(pol: Policy, recorder: Judge, input: str) -> int:
     return sum(1 for d in report["decisions"] if d.error)
 
 
+@app.command()
+def replay(
+    ledger: Path = typer.Argument(..., help="Ledger JSONL written by MemGate"),
+    policy: str = typer.Argument(..., help="New policy (template name or file)"),
+    only_changed: bool = typer.Option(False, "--only-changed", help="List changes only"),
+    fixtures: Path | None = typer.Option(None, help="Recorded answers for re-judging"),
+    as_json: bool = typer.Option(False, "--json", help="Machine-readable output"),
+) -> None:
+    """Re-decide past decisions under a new policy and list what would change."""
+    load_env()
+    from memgate.judges.recorded import RecordedJudge
+    from memgate.ledger import JsonlLedger, LedgerError
+    from memgate.replay import replay as do_replay
+
+    pol = get_policy(policy)
+    try:
+        decisions = list(JsonlLedger(ledger).read())
+    except (LedgerError, OSError) as exc:
+        raise fail(str(exc)) from None
+    judge = RecordedJudge(fixtures) if fixtures is not None else None
+    results = asyncio.run(do_replay(pol, decisions, judge))
+    shown = [r for r in results if r.changed or not only_changed]
+    if as_json:
+        print(json.dumps([{"decision_id": r.old.id, "text": r.old.candidate.text,
+                           "old_action": r.old.action,
+                           "new_action": r.new.action if r.new else None,
+                           "new_rule": r.new.rule if r.new else None, "changed": r.changed,
+                           "method": r.method, "reason": r.reason} for r in shown], indent=1))
+        return
+    for r in shown:
+        if r.new is None:
+            print(f"NEEDS-LIVE {r.old.action:13} {r.old.candidate.text[:70]!r} ({r.reason})")
+        elif r.changed:
+            print(f"CHANGED    {r.old.action} -> {r.new.action} (rule {r.new.rule}) "
+                  f"{r.old.candidate.text[:70]!r}")
+        else:
+            print(f"same       {r.old.action:13} {r.old.candidate.text[:70]!r}")
+    counts = Counter("changed" if r.changed else r.method if r.new is None else "same"
+                     for r in results)
+    print(f"{len(results)} decisions: {counts['changed']} changed, {counts['same']} unchanged, "
+          f"{counts['needs_live']} need live calls")
+
+
+@app.command()
+def lint(
+    policy: str = typer.Argument(..., help="Template name or policy file"),
+    strict: bool = typer.Option(False, "--strict", help="Warnings become errors"),
+) -> None:
+    """Warn about overlapping types, unused signals, unreachable rules and vague prompts."""
+    from memgate.policy.lint import lint as do_lint
+
+    pol = get_policy(policy)
+    warnings = do_lint(pol)
+    for w in warnings:
+        print(f"{pol.source}: {w}")
+    print(f"{pol.name} v{pol.version}: {len(warnings)} warning(s)")
+    if strict and warnings:
+        raise typer.Exit(1)
+
+
+@app.command()
+def review(
+    ledger: Path = typer.Argument(..., help="Ledger JSONL written by MemGate"),
+    export_tests: Path | None = typer.Option(None, "--export-tests",
+                                             help="Append overrides as policy tests"),
+) -> None:
+    """Accept, override or skip queued review decisions, one at a time."""
+    from memgate.ledger import JsonlLedger, LedgerError
+    from memgate.models import ACTIONS
+    from memgate.review import as_test, pending, resolve
+    from memgate.review import export_tests as write_tests
+
+    try:
+        queue = pending(JsonlLedger(ledger).read(), ledger)
+    except (LedgerError, OSError) as exc:
+        raise fail(str(exc)) from None
+    print(f"{len(queue)} decision(s) to review")
+    new_tests = []
+    for d in queue:
+        sigs = ", ".join(f"{k}={v.value:.2f}" if isinstance(v.value, float) else f"{k}={v.value}"
+                         for k, v in d.signals.items() if v is not None)
+        print(f"\n{d.candidate.text!r}\n  action={d.action} rule={d.rule} type={d.type}"
+              f"{' error=' + d.error if d.error else ''}\n  {sigs}")
+        choice = typer.prompt("[a]ccept, [o]verride, [s]kip", default="s").strip().lower()
+        if choice.startswith("a"):
+            resolve(ledger, d, "accepted", d.action)
+        elif choice.startswith("o"):
+            action = typer.prompt(f"correct action ({', '.join(ACTIONS)})").strip()
+            if action not in ACTIONS:
+                print(f"unknown action {action!r}; skipped")
+                continue
+            resolve(ledger, d, "overridden", action)
+            new_tests.append(as_test(d, action))
+    if export_tests is not None and new_tests:
+        write_tests(export_tests, new_tests)
+        print(f"exported {len(new_tests)} test(s) to {export_tests}")
+
+
 def main() -> None:
     """Console-script entry point."""
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")

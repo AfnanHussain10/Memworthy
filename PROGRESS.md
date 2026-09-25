@@ -70,7 +70,20 @@ Not done from the PRD's week 3: "running on Cortex" (the author's own project) i
 
 ## Milestone 4: Mem0 adapter and CLI
 
-- [ ] `GatedMemory`, `Mem0Store`; `run`, `replay`, `lint`, `review`
+- [x] `Mem0Store` and `GatedMemory` (input and candidate modes) against mem0ai 2.2.0 (`infer=False` verified)
+- [x] Offline Mem0 contract tests (in-memory Qdrant, local embedder, LLM guarded)
+- [x] `memgate replay` (rules over recorded signals; re-judge with fixtures; lists what needs live calls)
+- [x] `memgate lint` (`--strict`), `memgate review` (accept, override, skip; `--export-tests`)
+- [x] `Decision.questions_hash` so replay knows when prompts changed
+
+**Acceptance (clean copy):**
+
+| Check | Result |
+| --- | --- |
+| Mem0 contract tests | 7 passed (5 Mem0 adapter against mem0ai 2.2.0 offline, 2 Jev contract) |
+| `memgate replay` lists exactly the decisions a changed threshold flips | 8 of 124 flipped (durable 0.6 to 0.8), identical to an end-to-end re-run oracle; 0 need live calls |
+| `memgate lint` flags a fixture policy with overlapping types | `overlapping-types` (trip/travel, similarity 0.71) plus 6 other warnings; exit 1 with `--strict`; both templates clean |
+| `pytest -q`, `mypy src`, `ruff check`, coverage | 254 passed; clean (43 files); 97% on policy/engine/checks |
 
 ## Milestone 5: evaluation
 

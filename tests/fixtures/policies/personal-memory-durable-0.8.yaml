@@ -1,0 +1,181 @@
+# personal-memory: gate what a consumer assistant remembers about a person.
+# Copy and edit freely; every change should bump the version.
+policy: personal-memory
+version: "1.1-durable-0.8"
+description: >
+  Stores durable facts, preferences and relationships stated by the user; rejects temporary
+  states, plans, hypotheticals, small talk and anything not said by the user; redacts secrets;
+  routes third-party and sensitive information to review; updates or rolls back on corrections.
+types:
+  fact: A durable fact about the person themselves (home, job, education, background, possessions, habits)
+  preference: A lasting like, dislike or way the person wants things done
+  relationship: Who another person is to the person (family member, partner, friend, colleague)
+  temporary: A short-lived state such as travel, mood or this week's plans
+  intent: A plan, wish or option being considered, not yet true
+  hypothetical: A conditional or imagined situation
+  noise: Small talk or information with no lasting value
+signals:
+  from_user: {check: source_is_user}
+  secret: {check: secret_scan}
+  timing: {check: date_parse}
+  durable: {noul: "Is this a lasting fact, preference or relationship rather than a short-lived state or passing plan?"}
+  explicit: {noul: "Did the person state this directly rather than it being inferred?"}
+  about_subject: {noul: "Is this about the stated subject's own life, preferences or wishes (including who people are to them), rather than a fact about another person's life, job, habits or traits?"}
+  sensitivity:
+    score: "How sensitive is this personal information?"
+    levels: ["Not sensitive", "Personal", "Highly sensitive (health, finances, religion, precise location)"]
+  retraction: {noul: "Does the message walk back, soften or deny something the person said earlier, rather than report a new change in their life?"}
+rules:
+  - {name: secrets, when: "secret", then: redact}
+  - {name: not_user, when: "not from_user", then: reject}
+  - {name: retracted, when: "retraction > 0.7 and conflict", then: supersede, restore: true}
+  - {name: not_memory, when: "type in ['temporary', 'intent', 'hypothetical', 'noise']", then: reject}
+  - {name: bounded_time, when: "timing == 'bounded' or timing == 'future'", then: reject}
+  - {name: sensitive, when: "sensitivity >= 1.5", then: review}
+  - {name: low_durability, when: "durable < 0.8 or explicit < 0.5", then: reject}
+  - {name: wrong_subject, when: "about_subject < 0.5", then: review}
+  - {name: update_existing, when: "conflict and conflict.p > 0.6", then: update}
+  - {else: store}
+conflict:
+  k: 5
+  prompt: "Which existing memory is about the same thing (same home, job, habit, preference or possession) and is changed, replaced or contradicted by the new message? Pick none if the new message only adds to what is known."
+tests:
+  # Durable facts
+  - {input: "I live in Lahore", expect: store, expect_type: fact}
+  - {input: "I live in Dubai", expect: store, expect_type: fact}
+  - {input: "I work as a software engineer at a bank", expect: store, expect_type: fact}
+  - {input: "I'm a nurse", expect: store, expect_type: fact}
+  - {input: "I grew up in Karachi", expect: store, expect_type: fact}
+  - {input: "I studied mechanical engineering at university", expect: store, expect_type: fact}
+  - {input: "I speak Urdu, English and some Arabic", expect: store, expect_type: fact}
+  - {input: "I have two kids", expect: store}
+  - {input: "I'm vegetarian", expect: store}
+  - {input: "I drive a 2015 Honda Civic", expect: store, expect_type: fact}
+  - {input: "I work from home", expect: store}
+  - {input: "I'm a teacher at a primary school", expect: store, expect_type: fact}
+  - {input: "I was born in Toronto", expect: store, expect_type: fact}
+  - {input: "My native language is Arabic", expect: store, expect_type: fact}
+  - {input: "I have a dog named Max", expect: store}
+  - {input: "I've been a freelance designer for six years", expect: store, expect_type: fact}
+  - {input: "I play the guitar", expect: store}
+  - {input: "I run a small bakery", expect: store, expect_type: fact}
+  - {input: "I'm left-handed", expect: store, expect_type: fact}
+  - {input: "I moved to Riyadh last week", expect: store, expect_type: fact}
+  # Preferences
+  - {input: "I prefer tea over coffee", expect: store, expect_type: preference}
+  - {input: "I hate spicy food", expect: store, expect_type: preference}
+  - {input: "Please always answer me in short bullet points", expect: store, expect_type: preference}
+  - {input: "I love hiking in the mountains", expect: store, expect_type: preference}
+  - {input: "I don't like being called by my full name", expect: store, expect_type: preference}
+  - {input: "I prefer metric units", expect: store, expect_type: preference}
+  - {input: "I like reading science fiction", expect: store, expect_type: preference}
+  - {input: "I prefer morning meetings", expect: store, expect_type: preference}
+  - {input: "I can't stand horror movies", expect: store, expect_type: preference}
+  - {input: "I prefer window seats when I fly", expect: store, expect_type: preference}
+  - {input: "I like my code examples in Python", expect: store, expect_type: preference}
+  - {input: "I'm a big fan of jazz", expect: store, expect_type: preference}
+  # Relationships
+  - {input: "My wife's name is Sara", expect: store, expect_type: relationship}
+  - {input: "Ahmed is my brother", expect: store, expect_type: relationship}
+  - {input: "My manager is called Priya", expect: store, expect_type: relationship}
+  - {input: "Lina is my best friend", expect: store, expect_type: relationship}
+  - {input: "My son is called Omar", expect: store, expect_type: relationship}
+  - {input: "David is my business partner", expect: store, expect_type: relationship}
+  # Temporary states
+  - {input: "I'm in Dubai this week", expect: reject}
+  - {input: "I'm visiting London", expect: reject, expect_type: temporary}
+  - {input: "I'm feeling tired today", expect: reject}
+  - {input: "I have a headache right now", expect: reject}
+  - {input: "I'm at the airport", expect: reject, expect_type: temporary}
+  - {input: "I'm staying at a hotel in Paris for a few days", expect: reject}
+  - {input: "I'm stuck in traffic", expect: reject, expect_type: temporary}
+  - {input: "I'm on vacation in Bali", expect: reject, expect_type: temporary}
+  - {input: "I'm in a bad mood", expect: reject}
+  - {input: "I'm working late tonight", expect: reject}
+  - {input: "I'm babysitting my nephew this weekend", expect: reject}
+  - {input: "I'm on a business trip to Toronto", expect: reject, expect_type: temporary}
+  # Plans and considerations
+  - {input: "I'm thinking about buying a Porsche", expect: reject, expect_type: intent}
+  - {input: "I might learn French", expect: reject, expect_type: intent}
+  - {input: "I'm considering moving to Canada", expect: reject, expect_type: intent}
+  - {input: "I want to start running", expect: reject, expect_type: intent}
+  - {input: "I'm planning to quit my job", expect: reject, expect_type: intent}
+  - {input: "I hope to visit Japan someday", expect: reject, expect_type: intent}
+  - {input: "Maybe I'll get a cat", expect: reject, expect_type: intent}
+  - {input: "I'd like to learn to play piano", expect: reject, expect_type: intent}
+  - {input: "I'm looking at apartments in Riyadh", expect: reject}
+  - {input: "I'm thinking of switching to a vegan diet", expect: reject, expect_type: intent}
+  # Hypotheticals
+  - {input: "If I were a doctor, I'd work in pediatrics", expect: reject, expect_type: hypothetical}
+  - {input: "If I won the lottery I would buy a boat", expect: reject, expect_type: hypothetical}
+  - {input: "Imagine I lived in Tokyo, what would rent cost?", expect: reject}
+  - {input: "Suppose I had a Tesla, how often would I charge it?", expect: reject}
+  - {input: "If I moved to Berlin, would I need to learn German?", expect: reject}
+  - {input: "Pretend I'm a CEO and write my bio", expect: reject}
+  - {input: "What if I were allergic to nuts?", expect: reject}
+  - {input: "If I had a sister, I'd want her to be like you", expect: reject}
+  # Small talk and noise
+  - {input: "Hello!", expect: reject, expect_type: noise}
+  - {input: "Thanks, that's helpful", expect: reject, expect_type: noise}
+  - {input: "lol", expect: reject, expect_type: noise}
+  - {input: "What's the weather like?", expect: reject}
+  - {input: "ok cool", expect: reject, expect_type: noise}
+  - {input: "Can you summarize this article for me?", expect: reject}
+  - {input: "Good morning", expect: reject, expect_type: noise}
+  - {input: "Tell me a joke", expect: reject}
+  # Not stated by the user
+  - {input: "The user probably lives in Dubai", role: assistant, expect: reject}
+  - {input: "You seem to enjoy cooking", role: assistant, expect: reject}
+  - {input: "I live in Lahore", role: assistant, expect: reject}
+  - {input: "User is a vegetarian", role: tool, expect: reject}
+  - {input: "The user's favorite color is blue", role: system, expect: reject}
+  - {input: "Based on your messages, you work in finance", role: assistant, expect: reject}
+  # Secrets
+  - {input: "My OpenAI key is sk-proj-Zx9Yw8Vu7Ts6Rq5Po4Nm3Lk2", expect: redact}
+  - {input: "Here is my GitHub token ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789", expect: redact}
+  - {input: "Use AKIAABCDEFGHIJKLMNOP for the AWS access key", expect: redact}
+  - {input: "Our database is postgres://admin:s3cretPass@db.internal:5432/app", expect: redact}
+  - {input: "export STRIPE_SECRET=Zq8vN2kLp4Xr7Tb1Wm9Yc3Hd", expect: redact}
+  - {input: "My Anthropic key is sk-ant-api03-Ab1Ab1Ab1Ab1Ab1Ab1Ab1Ab1Ab1Ab1", expect: redact}
+  # Future and bounded time (dates are parsed by code, not the judge)
+  - {input: "I'm moving to Riyadh permanently next month", expect: reject}
+  - {input: "Flying to Riyadh tomorrow", expect: reject}
+  - {input: "I start my new job next week", expect: reject}
+  - {input: "I'll be living in Boston until December", expect: reject}
+  - {input: "I'm working in Doha for the next two weeks", expect: reject}
+  - {input: "I'm getting married next year", expect: reject}
+  - {input: "I'm staying with my parents for now", expect: reject}
+  - {input: "I'll be in Karachi in 3 days", expect: reject}
+  # About someone else
+  - {input: "My sister is a pilot", expect: review}
+  - {input: "My brother lives in Chicago", expect: review}
+  - {input: "My boss loves golf", expect: review}
+  - {input: "My friend Ali is a vegetarian", expect: review}
+  - {input: "My mother is a retired teacher", expect: review}
+  - {input: "My neighbor works at Google", expect: review}
+  # Sensitive categories
+  - {input: "I have type 2 diabetes", expect: review}
+  - {input: "I was diagnosed with depression", expect: review}
+  - {input: "My salary is 250,000 dollars a year", expect: review}
+  - {input: "I'm Muslim", expect: review}
+  - {input: "I live at 42 Park Lane, apartment 5B, London", expect: review}
+  - {input: "I take insulin every day", expect: review}
+  - {input: "I have 40,000 dollars in credit card debt", expect: review}
+  - {input: "I'm HIV positive", expect: review}
+  # Updates to existing memories
+  - {input: "I moved to Riyadh last week", existing: ["I live in Dubai"], context: "user: I live in Dubai", expect: update}
+  - {input: "I now work as a data scientist", existing: ["I work as a software engineer"], expect: update}
+  - {input: "I stopped being vegetarian and eat meat again", existing: ["I'm vegetarian"], expect: update}
+  - {input: "I switched from tea to coffee, I prefer coffee now", existing: ["I prefer tea over coffee"], expect: update}
+  - {input: "I sold my Honda and now drive a Toyota Corolla", existing: ["I drive a 2015 Honda Civic"], expect: update}
+  - {input: "I changed jobs, I'm a teacher now", existing: ["I work at a bank as an analyst"], expect: update}
+  # New information next to unrelated existing memories (no update)
+  - {input: "I play tennis on weekends", existing: ["I live in Dubai", "I work as a software engineer"], expect: store}
+  - {input: "I have a cat named Luna", existing: ["I have a dog named Max"], expect: store}
+  - {input: "I speak Spanish", existing: ["I speak Urdu, English and some Arabic"], expect: store}
+  - {input: "I love Italian food", existing: ["I prefer tea over coffee", "I live in Lahore"], expect: store}
+  # Corrections that take something back
+  - {input: "Actually I'm only considering it", existing: ["I moved to Riyadh last week"], context: "user: I live in Dubai\nuser: I moved to Riyadh last week", expect: supersede}
+  - {input: "Sorry, I misspoke, I don't have a dog", existing: ["I have a dog named Max"], expect: supersede}
+  - {input: "Scratch that, I never studied engineering", existing: ["I studied mechanical engineering at university"], expect: supersede}
+  - {input: "No wait, I don't actually work from home", existing: ["I work from home"], expect: supersede}

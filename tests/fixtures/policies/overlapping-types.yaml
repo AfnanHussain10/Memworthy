@@ -1,0 +1,16 @@
+# Lint fixture: 'trip' and 'travel' describe the same thing; 'mood' is never used by a rule.
+policy: overlapping-types
+version: "1"
+types:
+  fact: A durable fact about the user
+  trip: A short trip or travel plan the user is taking
+  travel: A travel plan or short trip the user takes
+signals:
+  durable: {noul: "Will this still be true in a year?"}
+  mood: {noul: "Is it good?"}
+rules:
+  - {when: "type in ['trip', 'travel']", then: reject}
+  - {when: "durable < 0.6", then: reject}
+  - {when: "durable < 0.6", then: review}
+  - {when: "durable > 1.5", then: review}
+  - {else: store}
