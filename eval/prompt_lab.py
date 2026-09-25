@@ -56,6 +56,10 @@ async def main(policy_ref: str, signal: str, variants_path: str) -> None:
                 if q is None:
                     return
                 q = q.model_copy(update={"prompt": spec["prompt"]})
+            elif signal == "type":
+                q = Question(name="type", kind="choice",
+                             prompt=spec.get("prompt", "What kind of information is this?"),
+                             options=spec.get("options", dict(policy.spec.types)))
             else:
                 base = policy.spec.signals[signal]
                 assert isinstance(base, ModelSignal)
@@ -65,7 +69,13 @@ async def main(policy_ref: str, signal: str, variants_path: str) -> None:
             async with sem:
                 res = await judge.judge(render_state(cand), [q])
             key = f"{test.expect}" + (f"/{test.expect_type}" if test.expect_type else "")
-            groups[key].append((_value(res.answers[q.name], q), test.input))
+            ans = res.answers[q.name]
+            if signal == "type":
+                key = f"type:{test.expect_type or '?'}"
+                val = (ans.probabilities or {}).get(test.expect_type or "", float("nan"))
+                groups[key].append((val, f"{ans.value}: {test.input}"))
+                return
+            groups[key].append((_value(ans, q), test.input))
 
         tests = [t for t in policy.spec.tests if t.role == "user"]
         await asyncio.gather(*(one(t) for t in tests))

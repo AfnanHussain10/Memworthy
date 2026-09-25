@@ -12,7 +12,8 @@ import yaml
 
 from memgate.policy.schema import PolicyTest
 
-CASE_FIELDS = ("role", "subject", "context", "existing", "metadata", "expect_type")
+CASE_FIELDS = ("role", "subject", "context", "existing", "metadata", "expect_type",
+               "source_text")
 
 
 class PairError(Exception):

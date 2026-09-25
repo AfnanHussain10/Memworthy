@@ -56,9 +56,15 @@ class PolicyTest(_Strict):
     subject: str = "user"
     context: str = ""
     metadata: dict[str, Any] = {}
+    source_text: str | None = None
     existing: list[str] = []
-    expect: Action
+    expect: Action | list[Action]
     expect_type: str | None = None
+
+    @property
+    def expected(self) -> list[str]:
+        """Accepted actions as a list."""
+        return list(self.expect) if isinstance(self.expect, list) else [self.expect]
 
 
 class SessionConfig(_Strict):

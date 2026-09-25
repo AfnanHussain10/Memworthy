@@ -1,4 +1,4 @@
-"""MemGate command-line interface. The only module allowed to print."""
+"""MemGate command-line interface. The CLI layer is the only code allowed to print."""
 
 from __future__ import annotations
 
@@ -6,101 +6,35 @@ import asyncio
 import json
 import logging
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
 import typer
 
 from memgate import __version__
+from memgate.cli_support import (
+    default_fixture_path,
+    detect_source,
+    fail,
+    get_policy,
+    load_candidates_file,
+    load_chat,
+    load_env,
+    make_judge,
+    make_store,
+    result_json,
+    signal_summary,
+)
 from memgate.judges.base import Judge, JudgeError
-from memgate.judges.mock import MockJudge
-from memgate.judges.recorded import FixtureFile, RecordedJudge, bundled_fixture_path
+from memgate.judges.recorded import FixtureFile, bundled_fixture_path
 from memgate.pairs import PairError, bundled_pairs_path, load_pairs
-from memgate.policy.loader import Policy, PolicyError, load_policy
+from memgate.policy.loader import Policy
 from memgate.policy.schema import PolicyTest
-from memgate.testing import TestResult, run_tests
+from memgate.testing import run_tests
 
 app = typer.Typer(help="MemGate: decide what an AI system should remember.",
                   no_args_is_help=True, add_completion=False)
-JUDGES = ("mock", "recorded", "jev")
-
-
-def load_env() -> None:
-    """Load .env from the working directory if python-dotenv is installed (dev extra)."""
-    try:
-        from dotenv import load_dotenv
-    except ImportError:
-        return
-    load_dotenv(Path.cwd() / ".env", override=False)
-
-
-def fail(message: str, code: int = 1) -> typer.Exit:
-    """Print an error to stderr and return an Exit to raise."""
-    print(f"error: {message}", file=sys.stderr)
-    return typer.Exit(code)
-
-
-def get_policy(ref: str) -> Policy:
-    """Load a policy or exit with its error."""
-    try:
-        return load_policy(ref)
-    except PolicyError as exc:
-        raise fail(str(exc)) from None
-
-
-def fixtures_for(policy: Policy, fixtures: Path | None) -> Path:
-    """The fixture file to use: explicit, else the bundled one for a template."""
-    if fixtures is not None:
-        return fixtures
-    bundled = bundled_fixture_path(policy.name)
-    if bundled is None:
-        raise fail(f"no bundled fixtures for '{policy.name}'; pass --fixtures PATH")
-    return bundled
-
-
-def make_judge(kind: str, policy: Policy, fixtures: Path | None) -> Judge:
-    """Build the judge selected on the command line."""
-    if kind not in JUDGES:
-        raise fail(f"--judge must be one of {', '.join(JUDGES)}")
-    if kind == "mock":
-        return MockJudge()
-    if kind == "recorded":
-        path = fixtures_for(policy, fixtures)
-        judge = RecordedJudge(path)
-        if judge.synthetic:
-            print("warning: fixtures are synthetic (hand-authored); results are not "
-                  "evidence of real judge behavior", file=sys.stderr)
-        return judge
-    from memgate.judges.jev import JevJudge
-
-    try:
-        return JevJudge()
-    except JudgeError as exc:
-        raise fail(str(exc)) from None
-
-
-def _signal_summary(result: TestResult) -> str:
-    parts = []
-    for name, sig in result.decision.signals.items():
-        if sig is None:
-            continue
-        if isinstance(sig.value, float):
-            parts.append(f"{name}={sig.value:.2f}")
-        else:
-            parts.append(f"{name}={sig.value}")
-    return ", ".join(parts)
-
-
-def result_json(r: TestResult) -> dict[str, Any]:
-    """JSON form of a test result."""
-    return {
-        "index": r.index, "input": r.test.input, "expect": r.test.expect,
-        "expect_type": r.test.expect_type, "action": r.decision.action,
-        "type": r.decision.type, "rule": r.decision.rule, "passed": r.passed,
-        "reason": r.reason, "error": r.decision.error,
-        "signals": {k: (v.model_dump(mode="json") if v else None)
-                    for k, v in r.decision.signals.items()},
-    }
 
 
 @app.command()
@@ -137,10 +71,9 @@ def test_cmd(
                           "results": [result_json(r) for r in results]}, indent=1))
     else:
         for r in results:
-            if r.passed:
-                continue
-            print(f"FAIL [{r.index}] {r.test.input!r}: {r.reason} (rule {r.decision.rule})")
-            print(f"     type={r.decision.type}; {_signal_summary(r)}")
+            if not r.passed:
+                print(f"FAIL [{r.index}] {r.test.input!r}: {r.reason} (rule {r.decision.rule})")
+                print(f"     type={r.decision.type}; {signal_summary(r)}")
         rate = 100.0 * passed / len(results)
         print(f"{pol.name} v{pol.version}: {passed}/{len(results)} passed ({rate:.1f}%) "
               f"with judge={j.name}")
@@ -149,10 +82,73 @@ def test_cmd(
 
 
 @app.command()
+def run(
+    policy: str = typer.Argument(..., help="Template name or policy file"),
+    source: Path = typer.Argument(..., help="Candidates file, chat JSON or session folder"),
+    fmt: str = typer.Option("auto", "--format",
+                            help="candidates, chat, claude_code, codex or auto"),
+    store: str = typer.Option("dict", help="dict, markdown:PATH or mem0"),
+    judge: str = typer.Option("jev", help="jev, recorded or mock"),
+    fixtures: Path | None = typer.Option(None, help="Fixture file for --judge recorded"),
+    extractor: str = typer.Option("none", help="none or llm (OpenRouter, EXTRACTOR_MODEL)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Decide only; write nothing"),
+    ledger: Path | None = typer.Option(None, help="Ledger path (default MEMGATE_LEDGER or "
+                                       "memgate.ledger.jsonl)"),
+) -> None:
+    """Gate a source into a store and print a summary."""
+    load_env()
+    from memgate.gate import Gate
+    from memgate.ledger import JsonlLedger
+
+    pol = get_policy(policy)
+    if not source.exists():
+        raise fail(f"source not found: {source}")
+    kind = detect_source(source, fmt)
+    j = make_judge(judge, pol, fixtures)
+    ext = None
+    if extractor == "llm":
+        from memgate.extractors import openrouter_extractor_from_env
+
+        try:
+            ext = openrouter_extractor_from_env()
+        except RuntimeError as exc:
+            raise fail(str(exc)) from None
+    elif extractor != "none":
+        raise fail("--extractor must be none or llm")
+    gate = Gate(pol, make_store(store), judge=j, ledger=JsonlLedger(ledger), extractor=ext,
+                apply=not dry_run)
+    report = asyncio.run(_run(gate, source, kind))
+    decisions = report.pop("decisions")
+    for key, value in report.items():
+        print(f"{key}: {value}")
+    counts = Counter(d.action for d in decisions)
+    print("decisions: " + (", ".join(f"{a}={n}" for a, n in sorted(counts.items())) or "none"))
+    errors = [d for d in decisions if d.error]
+    if errors:
+        print(f"{len(errors)} decisions had errors (first: {errors[0].error})", file=sys.stderr)
+    print(f"ledger: {gate.ledger.path if hasattr(gate.ledger, 'path') else '-'}")
+
+
+async def _run(gate: Any, source: Path, kind: str) -> dict[str, Any]:
+    if kind in ("sessions", "claude_code", "codex"):
+        from memgate.sources.pipeline import ingest_sessions
+
+        fmt = "auto" if kind == "sessions" else kind
+        ing = await ingest_sessions(gate.policy, gate.judge, source, fmt, gate.extractor)
+        decisions = await gate.aevaluate(ing.candidates)
+        return {"sessions": len(ing.sessions), "episodes": len(ing.episodes),
+                "noise_dropped": len(ing.dropped), "candidates": len(ing.candidates),
+                "decisions": decisions}
+    if kind == "chat":
+        return {"decisions": await gate.aingest_messages(load_chat(source))}
+    return {"decisions": await gate.aevaluate(load_candidates_file(source))}
+
+
+@app.command()
 def record(
     policy: str = typer.Argument(..., help="Template name or policy file"),
     input: str = typer.Argument("tests", help="'tests', 'pairs', a pair .yaml, a chat "
-                                "script .chat.json, or a candidates .json/.jsonl file"),
+                                ".chat.json, a session folder, or a candidates file"),
     out: Path | None = typer.Option(None, help="Fixture file (default: bundled path)"),
     fresh: bool = typer.Option(False, help="Drop existing entries before recording"),
 ) -> None:
@@ -162,7 +158,7 @@ def record(
     from memgate.judges.recorded import RecordingJudge
 
     pol = get_policy(policy)
-    path = out or bundled_fixture_path(pol.name) or _default_fixture_path(pol)
+    path = out or bundled_fixture_path(pol.name) or default_fixture_path(pol)
     try:
         live = JevJudge()
     except JudgeError as exc:
@@ -181,16 +177,9 @@ def record(
         raise typer.Exit(1)
 
 
-def _default_fixture_path(pol: Policy) -> Path:
-    from importlib import resources
-
-    return Path(str(resources.files("memgate"))) / "templates" / "fixtures" / f"{pol.name}.json"
-
-
 async def _record(pol: Policy, recorder: Judge, input: str) -> int:
     from memgate.gate import Gate
     from memgate.ledger import MemoryLedger
-    from memgate.sources.candidates import load_candidates
     from memgate.stores.dict import DictStore
 
     if input in ("tests", "pairs") or input.endswith((".yaml", ".yml")):
@@ -203,14 +192,11 @@ async def _record(pol: Policy, recorder: Judge, input: str) -> int:
             tests = [c.test for c in load_pairs(pair_path)]
         results = await run_tests(pol, recorder, tests)
         return sum(1 for r in results if r.decision.error)
-    if input.endswith(".chat.json"):
-        messages = json.loads(Path(input).read_text(encoding="utf-8"))
-        gate = Gate(pol, DictStore(), judge=recorder, ledger=MemoryLedger())
-        decisions = await gate.aingest_messages(messages)
-        return sum(1 for d in decisions if d.error)
     gate = Gate(pol, DictStore(), judge=recorder, ledger=MemoryLedger())
-    decisions = await gate.aevaluate(load_candidates(input))
-    return sum(1 for d in decisions if d.error)
+    path = Path(input)
+    kind = detect_source(path, "auto")
+    report = await _run(gate, path, kind)
+    return sum(1 for d in report["decisions"] if d.error)
 
 
 def main() -> None:

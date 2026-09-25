@@ -48,8 +48,25 @@ Note: the built-in tests were used to tune the prompts (106/120 at v1.0, 124/124
 
 ## Milestone 3: sessions and `dev-sessions`
 
-- [ ] Claude Code and Codex parsers (from real scrubbed samples)
-- [ ] Episode splitting, classification, extractor hook, Markdown sink
+- [x] Claude Code and Codex parsers built against real session layouts (Claude Code 2.1.251-2.1.281, Codex 0.107-0.130); committed fixtures reproduce those layouts with invented content (`scripts/make_session_fixtures.py`)
+- [x] Episode splitting (substantive user message or 30-minute gap), files read and edited, commands, outcome, condensed summary
+- [x] Episode classification (one Jev call per episode) with noise dropping
+- [x] Extractor hook: default (no LLM) and `llm_extractor` over any OpenAI-compatible client (OpenRouter via `EXTRACTOR_MODEL`)
+- [x] `MarkdownStore` (Obsidian-compatible, atomic writes, `_archive/`, reload on start); `LocalStore` shared with `DictStore`
+- [x] `dev-sessions` v1.1 with 105 built-in tests; fixtures recorded from real Jev calls
+- [x] `memgate run` (candidates, chat, sessions; dict, markdown or mem0 store; `--dry-run`; `--extractor llm`)
+
+**Acceptance (clean copy):**
+
+| Check | Result |
+| --- | --- |
+| `memgate run dev-sessions tests/fixtures/sessions --store markdown:/tmp/kb --judge recorded` | 6 sessions, 12 episodes, 1 dropped as noise, 11 candidates; 9 files (store 7, store_labeled 1, redact 1; reject 1, review 1) |
+| Output snapshot-tested (`tests/integration/test_dev_sessions.py`) | 3 passed; snapshot in `tests/fixtures/snapshots/dev-sessions-kb/` |
+| Noise episodes produce no files | Both planted noise episodes absent (one dropped at classification, noise 0.93; one rejected at gating) |
+| `memgate test dev-sessions --judge recorded` | 105/105 passed (72/102 at the spec's v1.0; see decisions) |
+| `pytest -q`, `mypy src`, `ruff check` | 236 passed; clean (39 files) |
+
+Not done from the PRD's week 3: "running on Cortex" (the author's own project) is left to the author, since it needs their private sessions.
 
 ## Milestone 4: Mem0 adapter and CLI
 

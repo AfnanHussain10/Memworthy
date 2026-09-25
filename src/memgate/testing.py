@@ -36,7 +36,7 @@ def test_candidate(test: PolicyTest) -> Candidate:
             f"{test.input}|{test.role}|{test.context}".encode()).hexdigest()[:16],
         text=test.input,
         subject=test.subject,
-        source=SourceRef(role=test.role, text=test.input),
+        source=SourceRef(role=test.role, text=test.source_text or test.input),
         context=test.context,
         metadata=dict(test.metadata),
     )
@@ -56,9 +56,9 @@ def check_result(index: int, test: PolicyTest, decision: Decision) -> TestResult
     """Compare a decision with the test's expectations."""
     if decision.error:
         return TestResult(index, test, decision, False, f"error: {decision.error}")
-    if decision.action != test.expect:
+    if decision.action not in test.expected:
         return TestResult(index, test, decision, False,
-                          f"expected {test.expect}, got {decision.action}")
+                          f"expected {' or '.join(test.expected)}, got {decision.action}")
     if test.expect_type and decision.type != test.expect_type:
         return TestResult(index, test, decision, False,
                           f"expected type {test.expect_type}, got {decision.type}")

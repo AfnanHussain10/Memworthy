@@ -1,0 +1,1083 @@
+# dev-sessions: turn Claude Code and Codex sessions into a project knowledge base.
+# Copy and edit freely; every change should bump the version.
+policy: dev-sessions
+version: "1.1"
+description: >
+  Keeps tasks, fixes, decisions, discussions, codebase explanations, project-specific concepts
+  and conventions; drops noise, abandoned approaches and generic textbook content; redacts
+  secrets; labels unverified fixes, ungrounded explanations and open questions; sends
+  unendorsed proposals to review; supersedes entries that a later decision replaces.
+sessions: {noise_threshold: 0.8, min_user_words: 8, gap_minutes: 30}
+types:
+  task: Work that was carried out, with its goal and final status
+  fix: A bug or problem, its cause, and the change made to resolve it
+  decision: A choice between approaches, made or proposed, with its reasoning
+  discussion: An exchange of ideas that may or may not reach a conclusion
+  explanation: How a specific module, file or data flow in this codebase works
+  concept: A technical insight or lesson (why something behaves as it does), general or project-specific
+  convention: A rule or preference for how work is done in this project
+  noise: Routine setup, retries, checks, small talk or raw output with no lasting value
+signals:
+  secret: {check: secret_scan}
+  verified: {check: outcome_verified}
+  grounded: {check: file_was_read}
+  endorsed: {noul: "Did the user state this themselves or clearly approve it (not just hear it suggested)?", applies_to: [decision, convention, discussion]}
+  concluded: {noul: "Did the discussion reach a clear conclusion?", applies_to: [discussion]}
+  superseded_later: {noul: "Was this approach abandoned or replaced later in the session?"}
+  project_specific: {noul: "Is this specific to this project rather than generic knowledge?", applies_to: [concept, explanation]}
+  worth_keeping: {noul: "Would a developer returning to this project in a month benefit from this?"}
+  routine: {noul: "Does this describe only routine housekeeping (installing dependencies, rerunning commands, checking status, greetings) rather than real work or knowledge?"}
+rules:
+  - {name: secrets, when: "secret", then: redact}
+  - {name: noise, when: "type == 'noise' or worth_keeping < 0.5 or routine > 0.7", then: reject}
+  - {name: abandoned, when: "superseded_later > 0.7", then: reject}
+  - {name: generic, when: "type == 'concept' and project_specific < 0.5", then: reject}
+  - {name: unverified_work, when: "type in ['fix', 'task'] and not verified", then: store_labeled, label: unverified}
+  - {name: ungrounded, when: "type == 'explanation' and not grounded", then: store_labeled, label: unverified}
+  - {name: open_question, when: "type == 'discussion' and concluded < 0.5", then: store_labeled, label: open-question}
+  - {name: proposal_only, when: "type in ['decision', 'convention'] and endorsed < 0.6", then: review}
+  - {name: replaces, when: "conflict and conflict.p > 0.7", then: supersede}
+  - {else: store}
+conflict:
+  k: 5
+  prompt: "Which existing knowledge-base entry is no longer accurate once the candidate memory is true?"
+tests:
+  # Tasks finished and verified
+  - input: Added pagination to the GET /orders endpoint (limit and cursor query params) in orders/views.py;
+      tests pass.
+    source_text: add pagination to the orders endpoint
+    context: |-
+      User: add pagination to the orders endpoint
+      Assistant: I'll add limit and cursor params.
+      Tool Edit: orders/views.py
+      Tool Bash: pytest tests/test_orders.py -q
+      14 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: task
+  - input: Renamed the UserProfile model to Account across the codebase and added a migration; committed
+      as a1b2c3d.
+    source_text: rename UserProfile to Account everywhere
+    context: |-
+      User: rename UserProfile to Account everywhere
+      Tool Edit: models.py
+      Tool Edit: migrations/0042_rename.py
+      Tool Bash: git commit -m 'rename UserProfile to Account'
+      [main a1b2c3d] rename UserProfile to Account
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: task
+  - input: Changed the playlist removal endpoint from POST /playlists/:id/remove to DELETE /playlists/:id/tracks/:trackId
+      in playlists.controller.ts; TypeScript compiles and the change is committed.
+    source_text: make track removal a DELETE route
+    context: |-
+      User: make track removal a DELETE route
+      Tool Edit: playlists.controller.ts
+      Tool Bash: npx tsc --noEmit
+      (no output)
+      Tool Bash: git commit -m 'feat(playlists): DELETE route'
+      [main 7c1d2e3] feat(playlists): DELETE route
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: task
+  - input: Added a docker-compose.yml that starts the recipe API, Postgres and a mail catcher for local
+      development.
+    source_text: give me a compose file for local dev
+    context: |-
+      User: give me a compose file for local dev
+      Tool apply_patch: docker-compose.yml
+      Tool Bash: docker compose up -d
+      Started 3 containers
+      User: works, thanks
+    metadata: {outcome: user_confirmed}
+    expect: store
+    expect_type: task
+  - input: Implemented CSV export for the reports page using a streaming response in reports/export.py;
+      tests pass.
+    source_text: add csv export to reports
+    context: |-
+      User: add csv export to reports
+      Tool Edit: reports/export.py
+      Tool Bash: pytest -q
+      52 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: task
+  - input: Upgraded the project from Django 4.2 to 5.0 and fixed the two deprecated settings; the full test
+      suite passes.
+    source_text: upgrade django to 5
+    context: |-
+      User: upgrade django to 5
+      Tool Edit: settings.py
+      Tool Bash: pytest -q
+      310 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: task
+  - input: Added retry with exponential backoff to the payment webhook sender in webhooks/send.py; committed.
+    source_text: retry failed payment webhooks
+    context: |-
+      User: retry failed payment webhooks with backoff
+      Tool Edit: webhooks/send.py
+      Tool Bash: git commit -m 'webhook retries'
+      [main 9f8e7d6] webhook retries
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: task
+  - input: Moved the scheduled cleanup job from cron to a Celery beat task defined in tasks/cleanup.py;
+      tests pass.
+    source_text: move the cleanup cron into celery beat
+    context: |-
+      User: move the cleanup cron into celery beat
+      Tool Edit: tasks/cleanup.py
+      Tool Bash: pytest tests/test_tasks.py
+      6 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: task
+  - input: Added a /healthz endpoint returning database and queue status for the load balancer; committed.
+    source_text: add a health check endpoint
+    context: |-
+      User: add a health check endpoint for the load balancer
+      Tool Edit: app/health.py
+      Tool Bash: git commit -m 'healthz'
+      [main 1a2b3c4] healthz
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: task
+  - input: Converted the weather widget from class components to React hooks; the production build passes.
+    source_text: convert the weather widget to hooks
+    context: |-
+      User: convert the weather widget to hooks
+      Tool apply_patch: src/widgets/Weather.tsx
+      Tool Bash: npm run build
+      Build succeeded
+    metadata: {outcome: build_passed}
+    expect: store
+    expect_type: task
+  - input: Replaced moment.js with date-fns in the dashboard and removed 60 KB from the bundle; tests pass.
+    source_text: replace moment with date-fns
+    context: |-
+      User: replace moment with date-fns
+      Tool Edit: src/utils/date.ts
+      Tool Bash: npm test
+      Tests: 88 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: task
+  - input: Added rate limiting of 60 requests per minute per API key to the public API using the existing
+      Redis client; committed.
+    source_text: rate limit the public api
+    context: |-
+      User: rate limit the public api per key, 60/min
+      Tool Edit: api/middleware.py
+      Tool Bash: git commit -m 'rate limit'
+      [main 5d6e7f8] rate limit
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: task
+  - input: Added an index on orders(customer_id, created_at), cutting the customer history query from 2
+      s to 40 ms; committed.
+    source_text: the customer history query is slow
+    context: |-
+      User: the customer history query is slow
+      Tool Edit: migrations/0043_index.py
+      Tool Bash: git commit -m 'index orders'
+      [main 4b5c6d7] index orders
+    metadata: {outcome: committed}
+    expect: store
+  - input: Wrote the OpenAPI spec for the public API in docs/openapi.yaml and wired it to the /docs page;
+      tests pass.
+    source_text: document the public api
+    context: |-
+      User: document the public api with openapi
+      Tool Edit: docs/openapi.yaml
+      Tool Bash: pytest tests/test_docs.py
+      3 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: task
+  # Fixes with verified outcomes
+  - input: 'Fixed the RSS reader crashing on feeds with a missing pubDate: entries without a date now fall
+      back to the fetch time; tests pass.'
+    source_text: the rss reader crashes on some feeds
+    context: |-
+      User: the rss reader crashes on some feeds
+      Assistant: Some entries have no pubDate.
+      Tool Edit: reader/feeds.py
+      Tool Bash: pytest tests/test_feeds.py
+      9 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: fix
+  - input: Fixed the thumbnail job failing on HEIC photos by installing libheif in the Docker image and
+      registering the pillow-heif plugin.
+    source_text: the thumbnail job fails on iphone photos
+    context: |-
+      User: the thumbnail job fails on iphone photos
+      Assistant: HEIC is not supported without libheif.
+      Tool apply_patch: Dockerfile
+      Tool Bash: docker build .
+      Successfully built
+      Tool Bash: git commit -m 'support heic thumbnails'
+      [main 2c3d4e5] support heic thumbnails
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: fix
+  - input: 'Fixed the flaky test_checkout test: it depended on dict ordering, so the assertion now compares
+      sorted items.'
+    source_text: test_checkout is flaky, fix it
+    context: |-
+      User: test_checkout is flaky, fix it
+      Tool Edit: tests/test_checkout.py
+      Tool Bash: pytest tests/test_checkout.py --count 50
+      50 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: fix
+  - input: 'Fixed a memory leak in the websocket server: listeners were never removed on disconnect; added
+      cleanup in on_close.'
+    source_text: the websocket server memory keeps growing
+    context: |-
+      User: the websocket server memory keeps growing
+      Assistant: Listeners are added on connect but never removed.
+      Tool Edit: ws/server.ts
+      Tool Bash: npm test
+      Tests: 40 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: fix
+  - input: Fixed timezone bugs in invoice dates by storing all timestamps in UTC and converting only in
+      the template.
+    source_text: invoice dates are off by a day for some customers
+    context: |-
+      User: invoice dates are off by a day for some customers
+      Tool Edit: billing/models.py
+      Tool Edit: templates/invoice.html
+      Tool Bash: pytest tests/billing -q
+      33 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: fix
+  - input: 'Fixed the login redirect loop: the session cookie lacked SameSite=None on the cross-site callback;
+      set it in settings.py.'
+    source_text: login keeps redirecting in a loop after sso
+    context: |-
+      User: login keeps redirecting in a loop after sso
+      Tool Edit: settings.py
+      Tool Bash: git commit -m 'fix sso cookie samesite'
+      [main 8a9b0c1] fix sso cookie samesite
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: fix
+  - input: Fixed N+1 queries on the projects list by adding select_related('owner'); page load went from
+      3 s to 200 ms.
+    source_text: projects page is very slow
+    context: |-
+      User: projects page is very slow
+      Assistant: Each row queries its owner separately.
+      Tool Edit: projects/views.py
+      Tool Bash: pytest tests/test_projects.py
+      12 passed
+    metadata: {outcome: tests_passed}
+    expect: store
+    expect_type: fix
+  - input: Fixed the CI failure caused by an expired npm token by switching the publish step to OIDC trusted
+      publishing.
+    source_text: ci publish step fails with 401
+    context: |-
+      User: ci publish step fails with 401
+      Tool Edit: .github/workflows/release.yml
+      Tool Bash: git commit -m 'use oidc publishing'
+      [main 3e4f5a6] use oidc publishing
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: fix
+  # Fixes without a verified outcome
+  - input: Changed the retry decorator to catch TimeoutError, which should fix the intermittent sync failures.
+    source_text: sync fails sometimes with timeouts
+    context: |-
+      User: sync fails sometimes with timeouts
+      Assistant: Catching TimeoutError in the retry decorator should help.
+      Tool Edit: sync/retry.py
+    metadata: {outcome: unknown}
+    expect: store_labeled
+    expect_type: fix
+  - input: Increased the database pool size to 20 to fix the connection exhaustion errors.
+    source_text: we get too many connections errors
+    context: |-
+      User: we get too many connections errors
+      Tool Edit: config/db.py
+      Assistant: This should fix it; I couldn't run the load test here.
+    metadata: {outcome: unknown}
+    expect: store_labeled
+    expect_type: fix
+  - input: Patched the CSV importer to skip blank rows, which should stop the import crash.
+    source_text: the importer crashes on some files
+    context: |-
+      User: the importer crashes on some files
+      Tool Edit: importer/csv.py
+      Tool Bash: pytest tests/test_importer.py
+      2 failed, 10 passed
+    metadata: {outcome: failed}
+    expect: store_labeled
+    expect_type: fix
+  - input: Set the S3 client region explicitly to fix the signature mismatch errors.
+    source_text: uploads fail with SignatureDoesNotMatch
+    context: |-
+      User: uploads fail with SignatureDoesNotMatch
+      Tool Edit: storage/s3.py
+      Assistant: I set the region; please try an upload.
+    metadata: {outcome: unknown}
+    expect: store_labeled
+    expect_type: fix
+  - input: Escaped user input in the search query builder to fix the SQL error on names with apostrophes.
+    source_text: search breaks for names like O'Brien
+    context: |-
+      User: search breaks for names like O'Brien
+      Tool Edit: search/query.py
+      Tool Bash: pytest tests/test_search.py
+      1 failed, 7 passed
+    metadata: {outcome: failed}
+    expect: store_labeled
+    expect_type: fix
+  - input: Added a null check before reading user.profile to fix the crash on the settings page.
+    source_text: settings page crashes for new users
+    context: |-
+      User: settings page crashes for new users
+      Tool Edit: web/settings.tsx
+      Assistant: Added a null check; not tested yet.
+    metadata: {outcome: unknown}
+    expect: store_labeled
+    expect_type: fix
+  - input: Raised the Lambda timeout to 60 seconds to fix the report generation timeouts.
+    source_text: report lambda times out
+    context: |-
+      User: report lambda times out
+      Tool Edit: infra/lambda.tf
+      Assistant: Raised the timeout to 60s. I haven't deployed it.
+    metadata: {outcome: unknown}
+    expect: store_labeled
+    expect_type: fix
+  - input: Downgraded the grpc package to 1.58 to fix the segfault on startup.
+    source_text: the service segfaults on startup after upgrading deps
+    context: |-
+      User: the service segfaults on startup after upgrading deps
+      Tool Edit: requirements.txt
+      Tool Bash: pytest -q
+      ERROR collecting tests: ImportError
+    metadata: {outcome: failed}
+    expect: store_labeled
+    expect_type: fix
+  # Decisions the user endorsed
+  - input: Chose PostgreSQL over MongoDB for the orders service because orders need transactions and joins;
+      MongoDB was rejected.
+    source_text: should we use postgres or mongo for orders?
+    context: |-
+      User: should we use postgres or mongo for orders?
+      Assistant: Postgres: orders need transactions and joins.
+      User: agreed, go with postgres
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: decision
+  - input: Decided to host the recipe site's images on a CDN bucket rather than the app server, because
+      it cuts bandwidth costs and page load time.
+    source_text: where should recipe images live?
+    context: |-
+      User: where should recipe images live?
+      Assistant: A CDN bucket: cheaper bandwidth and faster pages than serving from the app.
+      User: ok let's use the bucket
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: decision
+  - input: Decided that follow and unfollow share one route, POST and DELETE on /users/:id/follow, since
+      the HTTP verb already distinguishes them.
+    source_text: do we need separate follow and unfollow routes?
+    context: |-
+      User: do we need separate follow and unfollow routes?
+      Assistant: One route; POST follows and DELETE unfollows.
+      User: yes exactly
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: decision
+  - input: Chose server-sent events instead of websockets for live notifications because traffic is one-way
+      and SSE works through the existing proxy.
+    source_text: websockets or sse for notifications?
+    context: |-
+      User: websockets or sse for notifications?
+      Assistant: SSE: one-way traffic and it passes through the proxy.
+      User: sse it is
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: decision
+  - input: Decided to use a hosted search service only for indexing and build our own search UI on top of
+      its API.
+    source_text: we only want their search engine, not their widgets
+    context: |-
+      User: we only want the hosted search engine, not their UI widgets
+      Assistant: Then we call its API from our backend and render results ourselves.
+      User: correct
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: decision
+  - input: Decided to store money as integer cents rather than floats to avoid rounding errors.
+    source_text: how should we store prices?
+    context: |-
+      User: how should we store prices?
+      Assistant: Integer cents avoid float rounding.
+      User: yes, use cents everywhere
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: decision
+  - input: Chose to vendor the secret-scanning patterns instead of depending on detect-secrets, to keep
+      core dependencies small.
+    source_text: should we depend on detect-secrets?
+    context: |-
+      User: should we depend on detect-secrets?
+      Assistant: Vendoring ~12 regexes keeps the core small.
+      User: agreed, vendor them
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: decision
+  - input: Decided to pin the Jev model version in config instead of using jev-latest so evaluation results
+      stay reproducible.
+    source_text: should we use jev-latest?
+    context: |-
+      User: should we use jev-latest?
+      Assistant: Pin jev-1.13.0 so results are reproducible.
+      User: pin it
+    metadata: {outcome: committed}
+    expect: store
+    expect_type: decision
+  # Decisions only proposed, not endorsed
+  - input: Proposed switching the frontend from Webpack to Vite for faster builds.
+    source_text: the frontend build is slow
+    context: |-
+      User: the frontend build is slow
+      Assistant: I suggest migrating from Webpack to Vite.
+      User: hmm, let me think about it
+    metadata: {outcome: unknown}
+    expect: review
+    expect_type: decision
+  - input: Suggested splitting the monolith into separate billing and auth services.
+    source_text: the codebase is getting big
+    context: |-
+      User: the codebase is getting big
+      Assistant: I suggest splitting billing and auth into their own services.
+      User: hmm, maybe
+    metadata: {outcome: unknown}
+    expect: [review, store_labeled]
+  - input: Recommended replacing Redis with Memcached for the page cache.
+    source_text: is redis the right cache?
+    context: |-
+      User: is redis the right cache?
+      Assistant: Memcached may be simpler for the page cache.
+      User: I'll check with the team
+    metadata: {outcome: unknown}
+    expect: review
+    expect_type: decision
+  - input: Proposed adopting GraphQL for the mobile API instead of REST.
+    source_text: the mobile app makes too many requests
+    context: |-
+      User: the mobile app makes too many requests
+      Assistant: GraphQL would let the app fetch everything in one query.
+      User: maybe later
+    metadata: {outcome: unknown}
+    expect: [review, store_labeled]
+  - input: Suggested moving background jobs from Celery to RQ to reduce complexity.
+    source_text: celery is painful to operate
+    context: |-
+      User: celery is painful to operate
+      Assistant: RQ is simpler; we could move the jobs over.
+      User: let's not change that yet
+    metadata: {outcome: unknown}
+    expect: review
+    expect_type: decision
+  - input: Proposed using a monorepo with Turborepo for the web and mobile apps.
+    source_text: we share code between web and mobile
+    context: |-
+      User: we share code between web and mobile
+      Assistant: I suggest a Turborepo monorepo.
+      User: maybe later
+    metadata: {outcome: unknown}
+    expect: [review, store_labeled]
+  # Conventions
+  - input: 'Convention: every commit message in this repo follows Conventional Commits (feat, fix, refactor...).'
+    source_text: always use conventional commits in this repo
+    context: |-
+      User: always use conventional commits in this repo
+      Assistant: Understood, I'll use feat/fix/refactor prefixes.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: convention
+  - input: 'Convention: API handlers must never call the database directly; they go through the repository
+      layer.'
+    source_text: handlers should never touch the db directly, use repositories
+    context: |-
+      User: handlers should never touch the db directly, use repositories
+      Assistant: Noted.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: convention
+  - input: 'Convention: use pnpm, not npm or yarn, for all JavaScript packages in this project.'
+    source_text: we only use pnpm here
+    context: |-
+      User: we only use pnpm here, never npm
+      Assistant: Got it.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: convention
+  - input: 'Convention: all new modules need type hints and must pass mypy --strict before merging.'
+    source_text: new code must pass mypy strict
+    context: |-
+      User: new code must pass mypy strict before merge
+      Assistant: Understood.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: convention
+  - input: 'Convention: feature branches are named feat/<ticket-id>-<short-name>.'
+    source_text: name branches feat/<ticket>-<name>
+    context: |-
+      User: name branches feat/<ticket>-<name> from now on
+      Assistant: Will do.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: convention
+  - input: 'Convention: never commit .env files; configuration examples go in .env.example with empty values.'
+    source_text: don't ever commit env files
+    context: |-
+      User: don't ever commit env files, only .env.example with empty values
+      Assistant: Understood.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: convention
+  - input: 'Convention (suggested by the assistant): put all API tests under tests/api with one file per
+      resource.'
+    source_text: where should api tests go?
+    context: |-
+      User: where should api tests go?
+      Assistant: I'd suggest tests/api with one file per resource.
+      User: hmm
+    metadata: {outcome: unknown}
+    expect: review
+    expect_type: convention
+  - input: 'Convention (suggested by the assistant): use snake_case for all JSON response fields.'
+    source_text: what casing for json fields?
+    context: |-
+      User: what casing for json fields?
+      Assistant: I'd use snake_case everywhere.
+      User: not sure, the frontend team prefers camelCase
+    metadata: {outcome: unknown}
+    expect: review
+    expect_type: convention
+  - input: 'Convention (suggested by the assistant): limit functions to 40 lines.'
+    source_text: how long should functions be?
+    context: |-
+      User: how long should functions be?
+      Assistant: A 40-line limit keeps them readable.
+      User: let me think
+    metadata: {outcome: unknown}
+    expect: review
+    expect_type: convention
+  # Discussions
+  - input: 'Discussion concluded: the payment provider stays behind our own billing API; the frontend never
+      calls it directly.'
+    source_text: should the frontend call the payment provider directly?
+    context: |-
+      User: should the frontend call the payment provider directly?
+      Assistant: No, keep it behind our billing API so we can switch providers.
+      User: right, that's the plan
+    metadata: {outcome: unknown}
+    expect: store
+  - input: 'Discussion concluded: every imported recipe is normalized to one shape (title, ingredients,
+      steps, source_url) whatever site it came from.'
+    source_text: how should we store recipes from different sites?
+    context: |-
+      User: how should we store recipes from different sites?
+      Assistant: One shape for all sources: title, ingredients, steps, source_url.
+      User: agreed, write it down
+    metadata: {outcome: unknown}
+    expect: store
+  - input: 'Discussion concluded: caching is not worth adding to the search endpoint until traffic grows
+      past 10 requests per second.'
+    source_text: should we cache search?
+    context: |-
+      User: should we cache search?
+      Assistant: At 1-2 rps it is not worth it; revisit above 10 rps.
+      User: makes sense, skip caching for now
+    metadata: {outcome: unknown}
+    expect: store
+  - input: 'Open question: whether to keep supporting Python 3.9 after its end of life; no decision yet.'
+    source_text: should we drop python 3.9?
+    context: |-
+      User: should we drop python 3.9?
+      Assistant: Pros and cons... Some customers still run 3.9.
+      User: I need to ask sales first
+    metadata: {outcome: unknown}
+    expect: store_labeled
+    expect_type: discussion
+  - input: 'Open question: how to handle multi-tenant data isolation (schema per tenant vs row-level security)
+      is still undecided.'
+    source_text: how do we isolate tenant data?
+    context: |-
+      User: how do we isolate tenant data?
+      Assistant: Schema per tenant or row-level security; both have trade-offs.
+      User: let's discuss with the team next week
+    metadata: {outcome: unknown}
+    expect: store_labeled
+    expect_type: discussion
+  - input: 'Open question: whether to self-host the vector database or use a managed service was discussed
+      without a conclusion.'
+    source_text: self-host vector db or managed?
+    context: |-
+      User: self-host vector db or managed?
+      Assistant: Managed is faster to start, self-hosting is cheaper at scale.
+      User: no idea yet, need cost numbers
+    metadata: {outcome: unknown}
+    expect: store_labeled
+    expect_type: discussion
+  - input: 'Open question: the team has not decided between monthly and usage-based pricing for the API.'
+    source_text: monthly or usage pricing?
+    context: |-
+      User: monthly or usage pricing for the api?
+      Assistant: Usage-based fits bursty customers; monthly is simpler.
+      User: undecided, park it
+    metadata: {outcome: unknown}
+    expect: store_labeled
+    expect_type: discussion
+  # Codebase explanations
+  - input: 'The request flow: api/routes.py validates input, services/orders.py applies business rules,
+      and repositories/orders.py talks to Postgres.'
+    source_text: how does an order request flow through the code?
+    context: |-
+      User: how does an order request flow through the code?
+      Tool Read: api/routes.py
+      Tool Read: services/orders.py
+      Tool Read: repositories/orders.py
+      Assistant: The request flow: api/routes.py validates input, services/orders.py applies business rules, and repositories/orders.py talks to Postgres.
+    metadata:
+      outcome: unknown
+      files_read: [api/routes.py, services/orders.py, repositories/orders.py]
+      referenced_files: [api/routes.py, services/orders.py, repositories/orders.py]
+    expect: store
+    expect_type: explanation
+  - input: Authentication works through middleware/auth.py, which reads the JWT from the Authorization header
+      and loads the user via users/service.py.
+    source_text: explain how auth works here
+    context: |-
+      User: explain how auth works here
+      Tool Read: middleware/auth.py
+      Tool Read: users/service.py
+      Assistant: Authentication works through middleware/auth.py, which reads the JWT from the Authorization header and loads the user via users/service.py.
+    metadata:
+      outcome: unknown
+      files_read: [middleware/auth.py, users/service.py]
+      referenced_files: [middleware/auth.py, users/service.py]
+    expect: store
+    expect_type: explanation
+  - input: The worker consumes jobs from RabbitMQ in app/worker.py and dispatches them to handlers registered
+      in app/services/queue.py.
+    source_text: how does the worker get jobs?
+    context: |-
+      User: how does the worker get jobs?
+      Tool Read: app/worker.py
+      Tool Read: app/services/queue.py
+      Tool Read: app/main.py
+      Assistant: The worker consumes jobs from RabbitMQ in app/worker.py and dispatches them to handlers registered in app/services/queue.py.
+    metadata:
+      outcome: unknown
+      files_read: [app/worker.py, app/services/queue.py, app/main.py]
+      referenced_files: [app/worker.py, app/services/queue.py]
+    expect: store
+    expect_type: explanation
+  - input: Feature flags are read once at startup from config/flags.yaml by core/flags.py and cached in
+      memory.
+    source_text: where do feature flags come from?
+    context: |-
+      User: where do feature flags come from?
+      Tool Read: core/flags.py
+      Tool Read: config/flags.yaml
+      Assistant: Feature flags are read once at startup from config/flags.yaml by core/flags.py and cached in memory.
+    metadata:
+      outcome: unknown
+      files_read: [core/flags.py, config/flags.yaml]
+      referenced_files: [core/flags.py, config/flags.yaml]
+    expect: store
+    expect_type: explanation
+  - input: Billing webhooks are verified in billing/webhooks.py using the Stripe signing secret before any
+      database write.
+    source_text: how are stripe webhooks handled?
+    context: |-
+      User: how are stripe webhooks handled?
+      Tool Read: billing/webhooks.py
+      Assistant: Billing webhooks are verified in billing/webhooks.py using the Stripe signing secret before any database write.
+    metadata:
+      outcome: unknown
+      files_read: [billing/webhooks.py]
+      referenced_files: [billing/webhooks.py]
+    expect: store
+    expect_type: explanation
+  - input: Failed charges are retried three times with a one-hour gap by payments/retry.py.
+    source_text: how do payment retries work?
+    context: |-
+      User: how do payment retries work?
+      Assistant: Failed charges are retried three times with a one-hour gap by payments/retry.py.
+    metadata:
+      outcome: unknown
+      files_read: []
+      referenced_files: [payments/retry.py]
+    expect: store_labeled
+    expect_type: explanation
+  - input: Search results are ranked in search/rank.py using BM25 plus a recency boost.
+    source_text: how is search ranked?
+    context: |-
+      User: how is search ranked?
+      Tool Read: search/query.py
+      Assistant: Search results are ranked in search/rank.py using BM25 plus a recency boost.
+    metadata:
+      outcome: unknown
+      files_read: [search/query.py]
+      referenced_files: [search/rank.py]
+    expect: store_labeled
+    expect_type: explanation
+  - input: Emails are sent through notifications/mailer.py, which batches them every minute.
+    source_text: how are emails sent?
+    context: |-
+      User: how are emails sent?
+      Assistant: Emails are sent through notifications/mailer.py, which batches them every minute.
+    metadata:
+      outcome: unknown
+      files_read: []
+      referenced_files: [notifications/mailer.py]
+    expect: store_labeled
+    expect_type: explanation
+  - input: The cache layer in core/cache.py wraps Redis and falls back to an in-process LRU when Redis is
+      down.
+    source_text: what happens when redis is down?
+    context: |-
+      User: what happens when redis is down?
+      Tool Read: core/db.py
+      Assistant: The cache layer in core/cache.py wraps Redis and falls back to an in-process LRU when Redis is down.
+    metadata:
+      outcome: unknown
+      files_read: [core/db.py]
+      referenced_files: [core/cache.py]
+    expect: store_labeled
+    expect_type: explanation
+  # Concepts
+  - input: In this project, Jev score answers are probability-weighted positions, so rules compare them
+      numerically (sensitivity >= 1.5) instead of by level name.
+    source_text: why do our rules compare scores with numbers?
+    context: |-
+      User: why do our rules compare scores with numbers?
+      Assistant: In this project, Jev score answers are probability-weighted positions, so rules compare them numerically (sensitivity >= 1.5) instead of by level name.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: concept
+  - input: 'Lesson learned in this project: a short retraction such as ''actually no'' shares no words with
+      the memory it retracts, so a text-only search misses it; the query has to include the conversation
+      context.'
+    source_text: why does similar() use the context too?
+    context: |-
+      User: why does similar() use the context too?
+      Assistant: Lesson learned in this project: a short retraction such as 'actually no' shares no words with the memory it retracts, so a text-only search misses it; the query has to include the conversation context.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: concept
+  - input: In this project every candidate costs exactly one Jev call, so API spend scales with the number
+      of candidates, not with the number of rules.
+    source_text: how does our jev cost scale?
+    context: |-
+      User: how does our jev cost scale?
+      Assistant: In this project every candidate costs exactly one Jev call, so API spend scales with the number of candidates, not with the number of rules.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: concept
+  - input: Our tenant IDs are ULIDs so rows sort by creation time without a separate created_at index.
+    source_text: why are our tenant ids ulids?
+    context: |-
+      User: why are our tenant ids ulids?
+      Assistant: Our tenant IDs are ULIDs so rows sort by creation time without a separate created_at index.
+    metadata: {outcome: unknown}
+    expect: store
+    expect_type: concept
+  - input: A Python list comprehension is a concise way to build a list from an iterable.
+    source_text: what's a list comprehension?
+    context: |-
+      User: what's a list comprehension?
+      Assistant: A Python list comprehension is a concise way to build a list from an iterable.
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: concept
+  - input: HTTP 404 means the requested resource was not found.
+    source_text: what does 404 mean?
+    context: |-
+      User: what does 404 mean?
+      Assistant: HTTP 404 means the requested resource was not found.
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: concept
+  - input: Git rebase rewrites commits on top of another base commit.
+    source_text: what does git rebase do?
+    context: |-
+      User: what does git rebase do?
+      Assistant: Git rebase rewrites commits on top of another base commit.
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: concept
+  - input: A foreign key links a column to the primary key of another table.
+    source_text: what is a foreign key?
+    context: |-
+      User: what is a foreign key?
+      Assistant: A foreign key links a column to the primary key of another table.
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: concept
+  - input: JSON is a text format for structured data using objects and arrays.
+    source_text: what is json?
+    context: |-
+      User: what is json?
+      Assistant: JSON is a text format for structured data using objects and arrays.
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: concept
+  - input: Big-O notation describes how an algorithm's cost grows with input size.
+    source_text: what is big o?
+    context: |-
+      User: what is big o?
+      Assistant: Big-O notation describes how an algorithm's cost grows with input size.
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: concept
+  # Noise
+  - input: Ran npm install to set up the project.
+    source_text: install the deps
+    context: |-
+      User: install the deps
+      Tool Bash: npm install
+      added 812 packages
+    metadata: {outcome: unknown}
+    expect: reject
+  - input: Retried the test command three times while the database container started.
+    source_text: run the tests
+    context: |-
+      User: run the tests
+      Tool Bash: pytest
+      connection refused
+      Tool Bash: pytest
+      connection refused
+      Tool Bash: pytest
+      40 passed
+    metadata: {outcome: unknown}
+    expect: reject
+  - input: Printed the last 200 lines of the server log.
+    source_text: show me the logs
+    context: |-
+      User: show me the logs
+      Tool Bash: tail -n 200 server.log
+      [INFO] started ... [INFO] request ...
+    metadata: {outcome: unknown}
+    expect: reject
+  - input: Said hello and asked what to work on today.
+    source_text: hi
+    context: |-
+      User: hi
+      Assistant: Hi! What should we work on today?
+    metadata: {outcome: unknown}
+    expect: reject
+  - input: Listed the files in the repository root.
+    source_text: what's in this repo?
+    context: |-
+      User: what's in this repo?
+      Tool Bash: ls -la
+      README.md src tests
+    metadata: {outcome: unknown}
+    expect: reject
+  - input: Logged in to the CLI with /login.
+    source_text: /login
+    context: |-
+      User: /login
+      Login successful
+    metadata: {outcome: unknown}
+    expect: reject
+  - input: Checked git status; the working tree was clean.
+    source_text: git status
+    context: |-
+      User: git status
+      Tool Bash: git status
+      nothing to commit, working tree clean
+    metadata: {outcome: unknown}
+    expect: reject
+  - input: Thanked the assistant.
+    source_text: thanks!
+    context: |-
+      User: thanks!
+      Assistant: You're welcome!
+    metadata: {outcome: unknown}
+    expect: reject
+  - input: Cleared the terminal and restarted the dev server.
+    source_text: restart the server
+    context: |-
+      User: restart the server
+      Tool Bash: npm run dev
+      ready on http://localhost:3000
+    metadata: {outcome: unknown}
+    expect: reject
+  - input: Asked whether the assistant can see the repository.
+    source_text: can you see the repo?
+    context: |-
+      User: can you see the repo?
+      Assistant: Yes, I can see it.
+    metadata: {outcome: unknown}
+    expect: reject
+  # Approaches abandoned later in the session
+  - input: Implemented caching with functools.lru_cache on get_user.
+    source_text: speed up get_user
+    context: |-
+      User: speed up get_user
+      Tool Edit: users/service.py (lru_cache)
+      User: that breaks when users change, revert it and use redis instead
+      Tool Edit: users/service.py (redis cache)
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: task
+  - input: Added a regex-based HTML stripper for model responses.
+    source_text: strip html from responses
+    context: |-
+      User: strip html from responses
+      Tool Edit: llm/clean.py (regex)
+      User: regex is fragile, drop it, check the content-type instead
+      Tool Edit: llm/client.py
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: task
+  - input: Wrote a custom date parser for the importer.
+    source_text: parse the dates in the import files
+    context: |-
+      User: parse the dates in the import files
+      Tool Edit: importer/dates.py (custom parser)
+      User: never mind, just use dateutil
+      Tool Edit: importer/dates.py (dateutil)
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: task
+  - input: Started moving the API routes to FastAPI.
+    source_text: migrate routes to fastapi
+    context: |-
+      User: migrate routes to fastapi
+      Tool Edit: api/app.py
+      User: stop, we're staying on Flask, revert that
+      Tool Bash: git checkout api/app.py
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: task
+  - input: Added polling every second to refresh the dashboard.
+    source_text: make the dashboard live
+    context: |-
+      User: make the dashboard live
+      Tool Edit: web/dashboard.ts (setInterval 1s)
+      User: polling is too heavy, use SSE instead
+      Tool Edit: web/dashboard.ts (EventSource)
+    metadata: {outcome: unknown}
+    expect: reject
+    expect_type: task
+  # Secrets in the transcript
+  - input: Configured the OpenAI client with key sk-proj-Rt5Yu6Io7Pa8Sd9Fg0Hj1Kl2 in config.py.
+    source_text: set up the openai client
+    context: |-
+      User: set up the openai client
+      Assistant: Configured the OpenAI client with key sk-proj-Rt5Yu6Io7Pa8Sd9Fg0Hj1Kl2 in config.py.
+    metadata: {outcome: committed}
+    expect: redact
+  - input: Added the deploy token ghp_Ab1Cd2Ef3Gh4Ij5Kl6Mn7Op8Qr9St0Uv1Wx2Yz3A to the CI secrets.
+    source_text: add the deploy token to ci
+    context: |-
+      User: add the deploy token to ci
+      Assistant: Added the deploy token ghp_Ab1Cd2Ef3Gh4Ij5Kl6Mn7Op8Qr9St0Uv1Wx2Yz3A to the CI secrets.
+    metadata: {outcome: committed}
+    expect: redact
+  - input: Connected to the database at postgres://app:Sup3rSecret99@db.internal:5432/prod to run the migration.
+    source_text: run the migration on prod
+    context: |-
+      User: run the migration on prod
+      Assistant: Connected to the database at postgres://app:Sup3rSecret99@db.internal:5432/prod to run the migration.
+    metadata: {outcome: committed}
+    expect: redact
+  - input: Set AWS access key AKIAZXCVBNMASDFGHJKL in the deploy script.
+    source_text: fix the deploy script credentials
+    context: |-
+      User: fix the deploy script credentials
+      Assistant: Set AWS access key AKIAZXCVBNMASDFGHJKL in the deploy script.
+    metadata: {outcome: committed}
+    expect: redact
+  # New entries that replace existing ones
+  - input: Decided to host recipe images on the app server again instead of the CDN bucket, because the
+      bucket's egress fees turned out higher.
+    source_text: the cdn bill is too high, move images back
+    context: |-
+      User: the cdn bill is too high, move images back
+      Assistant: Decided to host recipe images on the app server again instead of the CDN bucket, because the bucket's egress fees turned out higher.
+      User: yes do it
+    metadata: {outcome: committed}
+    existing: [Decided to host the recipe site's images on a CDN bucket rather than the app server.]
+    expect: supersede
+  - input: Switched the page cache from Redis to Memcached to cut memory costs.
+    source_text: switch the page cache to memcached
+    context: |-
+      User: switch the page cache to memcached
+      Assistant: Switched the page cache from Redis to Memcached to cut memory costs.
+      User: yes do it
+    metadata: {outcome: committed}
+    existing: [The page cache uses Redis.]
+    expect: supersede
+  - input: 'Convention: use Ruff instead of Black and isort for formatting and imports.'
+    source_text: we moved to ruff, no more black
+    context: |-
+      User: we moved to ruff, no more black
+      Assistant: Convention: use Ruff instead of Black and isort for formatting and imports.
+      User: yes do it
+    metadata: {outcome: committed}
+    existing: ['Convention: format Python with Black and sort imports with isort.']
+    expect: supersede
+  - input: Decided to store prices as Decimal in the database instead of integer cents, for the new multi-currency
+      support.
+    source_text: multi-currency needs decimals, change how we store prices
+    context: |-
+      User: multi-currency needs decimals, change how we store prices
+      Assistant: Decided to store prices as Decimal in the database instead of integer cents, for the new multi-currency support.
+      User: yes do it
+    metadata: {outcome: committed}
+    existing: [Decided to store money as integer cents rather than floats to avoid rounding errors.]
+    expect: supersede
+  # New entries next to unrelated existing ones
+  - input: Added CSV export to the reports page using a streaming response; tests pass.
+    source_text: add csv export to reports
+    context: |-
+      User: add csv export to reports
+      Assistant: Added CSV export to the reports page using a streaming response; tests pass.
+      User: yes do it
+    metadata: {outcome: tests_passed}
+    existing: [Decided to store money as integer cents rather than floats to avoid rounding errors.]
+    expect: store
+    expect_type: task
+  - input: 'Convention: every pull request needs one approving review before merge.'
+    source_text: all PRs need one approval before merging
+    context: |-
+      User: all PRs need one approval before merging
+      Assistant: Convention: every pull request needs one approving review before merge.
+      User: yes do it
+    metadata: {outcome: tests_passed}
+    existing: ['Convention: use pnpm, not npm or yarn, for all JavaScript packages in this project.']
+    expect: store
+    expect_type: convention
+  - input: Chose SQLite for the local-only desktop build because it needs no server.
+    source_text: what database for the desktop build?
+    context: |-
+      User: what database for the desktop build?
+      Assistant: Chose SQLite for the local-only desktop build because it needs no server.
+      User: yes do it
+    metadata: {outcome: tests_passed}
+    existing: [Chose PostgreSQL over MongoDB for the orders service because orders need transactions and
+        joins.]
+    expect: store
+    expect_type: decision

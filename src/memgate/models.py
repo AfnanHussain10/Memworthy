@@ -144,3 +144,5 @@ class Episode(_Frozen):
     summary_text: str = ""
     started_at: datetime | None = None
     ended_at: datetime | None = None
+    episode_type: str | None = None
+    project: str = "project"
