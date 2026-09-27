@@ -4,14 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from memgate.checks.registry import register_rule
-from memgate.policy.loader import (
+from memworthy.checks.registry import register_rule
+from memworthy.policy.loader import (
     PolicyError,
     load_policy,
     load_policy_text,
     template_names,
 )
-from memgate.policy.schema import CheckSignal, ModelSignal, PolicySpec, json_schema
+from memworthy.policy.schema import CheckSignal, ModelSignal, PolicySpec, json_schema
 from tests.unit.policies import BASIC
 
 

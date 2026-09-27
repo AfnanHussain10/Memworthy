@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from memgate import MockJudge
+from memworthy import MockJudge
 
 PATH = Path(__file__).resolve().parents[2] / "eval" / "longmemeval.py"
 spec = importlib.util.spec_from_file_location("lme", PATH)
@@ -66,7 +66,7 @@ async def test_pipeline_pieces(tmp_path: Path) -> None:
     top = lme.top_memories(base, QUESTION["question"])
     assert top[0].startswith("(2023/05/01") and len(top) == 2
     a = await lme.answer(llm, "baseline", QUESTION, top)
-    b = await lme.answer(llm, "memgate", QUESTION, lme.top_memories(gated, "5K personal best"))
+    b = await lme.answer(llm, "memworthy", QUESTION, lme.top_memories(gated, "5K personal best"))
     assert await lme.grade(llm, QUESTION, a, b) == (False, True)
     assert lme._iso("2023/05/20 (Sat) 02:21") == "2023-05-20T12:00:00+00:00"
     assert lme._iso("bad") == ""

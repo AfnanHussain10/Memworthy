@@ -21,7 +21,7 @@ dist/
 htmlcov/
 
 # Runtime output
-memgate.ledger.jsonl
+memworthy.ledger.jsonl
 *.ledger.jsonl
 !tests/fixtures/**/*.ledger.jsonl
 playground/backend/.state/
@@ -33,3 +33,7 @@ node_modules/
 # LongMemEval run artifacts (cache, per-question rows); only README.md is tracked
 /eval/results/longmemeval/*
 !/eval/results/longmemeval/README.md
+*.tsbuildinfo
+
+# Agent instructions (local only)
+/CLAUDE.md

@@ -7,13 +7,13 @@ from typing import Any
 import httpx
 import pytest
 
-from memgate.extractors import (
+from memworthy.extractors import (
     OpenAICompatibleClient,
     llm_extractor,
     openrouter_extractor_from_env,
     parse_entries,
 )
-from memgate.models import Episode, Turn
+from memworthy.models import Episode, Turn
 
 EPISODE = Episode(
     id="ep1", session_id="s1", project="bookshelf", episode_type="decision",

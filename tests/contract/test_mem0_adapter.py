@@ -19,10 +19,10 @@ from mem0 import Memory as Mem0Memory
 from mem0.embeddings.base import EmbeddingBase
 from qdrant_client import QdrantClient
 
-from memgate import Candidate, MemoryLedger, MockJudge
-from memgate.models import Decision, Patch, SignalValue
-from memgate.stores.base import StoreError
-from memgate.stores.mem0 import GatedMemory, Mem0Store
+from memworthy import Candidate, MemoryLedger, MockJudge
+from memworthy.models import Decision, Patch, SignalValue
+from memworthy.stores.base import StoreError
+from memworthy.stores.mem0 import GatedMemory, Mem0Store
 
 pytestmark = pytest.mark.contract
 DIMS = 64
@@ -44,7 +44,7 @@ class HashEmbedder(EmbeddingBase):  # type: ignore[misc]
 def client(tmp_path: Path) -> Any:
     cfg = {
         "vector_store": {"provider": "qdrant", "config": {
-            "collection_name": "memgate_test", "client": QdrantClient(":memory:"),
+            "collection_name": "memworthy_test", "client": QdrantClient(":memory:"),
             "embedding_model_dims": DIMS}},
         "embedder": {"provider": "openai", "config": {"api_key": "unused",
                                                       "embedding_dims": DIMS}},
@@ -89,13 +89,13 @@ async def test_store_actions(client: Any) -> None:
                              patch=Patch(target_id=m.id, old_text=m.text,
                                          new_text="I live in Riyadh")))
     assert u is not None and u.id == m.id and u.text == "I live in Riyadh"
-    assert u.metadata["memgate_previous_text"] == "I live in Dubai"
+    assert u.metadata["memworthy_previous_text"] == "I live in Dubai"
     back = await store.apply(_d("supersede", "Actually only considering it", target=u,
                                 patch=Patch(target_id=u.id, old_text=u.text,
                                             new_text="I live in Dubai", restore=True)))
     assert back is not None and back.text == "I live in Dubai"
     merged = await store.apply(_d("merge", "Dubai again", target=back))
-    assert merged is not None and len(merged.metadata["memgate_merged"]) == 1
+    assert merged is not None and len(merged.metadata["memworthy_merged"]) == 1
     gone = await store.apply(_d("supersede", "never mind", target=labeled))
     assert gone is None
     texts = sorted(x.text for x in await store.all())
@@ -137,7 +137,7 @@ def test_gated_memory_input_mode(client: Any) -> None:
     assert "I live in Lisbon" in contents and "be nice" in contents
     assert not any("Rome" in c for c in contents)  # temporary + assistant rejected
     assert "my key is [REDACTED:openai]" in contents and not any(key in c for c in contents)
-    assert [d["action"] for d in out["memgate_decisions"]] == [
+    assert [d["action"] for d in out["memworthy_decisions"]] == [
         "store", "reject", "reject", "redact"]
     stored = sorted(m["memory"] for m in gm.get_all(filters={"user_id": "bob"})["results"])
     assert stored == ["I live in Lisbon", "my key is [REDACTED:openai]"]  # Mem0 skips system
@@ -146,7 +146,7 @@ def test_gated_memory_input_mode(client: Any) -> None:
 def test_gated_memory_nothing_left(client: Any) -> None:
     gm = GatedMemory(client, "personal-memory", judge=_judge(), ledger=MemoryLedger())
     out = gm.add("I'm visiting Paris this week", user_id="carol", infer=False)
-    assert out["results"] == [] and out["memgate_decisions"][0]["action"] == "reject"
+    assert out["results"] == [] and out["memworthy_decisions"][0]["action"] == "reject"
     assert client.get_all(filters={"user_id": "carol"})["results"] == []
 
 
@@ -158,7 +158,7 @@ def test_gated_memory_candidate_mode_and_passthrough(client: Any) -> None:
     assert [r["event"] for r in out["results"]] == ["STORE"]
     stored = gm.get_all(filters={"user_id": "dan"})["results"]
     assert [m["memory"] for m in stored] == ["I work as a nurse"]
-    assert stored[0]["metadata"]["memgate_type"] == "fact"
+    assert stored[0]["metadata"]["memworthy_type"] == "fact"
     hits = gm.search("nurse", filters={"user_id": "dan"}, top_k=3)["results"]
     assert hits[0]["memory"] == "I work as a nurse"
     gm.delete(stored[0]["id"])

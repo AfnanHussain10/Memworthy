@@ -1,6 +1,6 @@
 # Evaluation results
 
-All numbers come from real `jev-1.13.0` answers recorded with `memgate record` (fixtures in `src/memgate/templates/fixtures/`, `synthetic: false`) and are regenerated with `memgate eval <policy>`. Policies were frozen at v1.1 before the contrast pairs were recorded; the pairs were not used for tuning.
+All numbers come from real `jev-1.13.0` answers recorded with `memworthy record` (fixtures in `src/memworthy/templates/fixtures/`, `synthetic: false`) and are regenerated with `memworthy eval <policy>`. Policies were frozen at v1.1 before the contrast pairs were recorded; the pairs were not used for tuning.
 
 ## Contrast pairs (held out)
 

@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from memgate import Gate, MemoryLedger, RecordedJudge
-from memgate.cli import app
-from memgate.judges.recorded import bundled_fixture_path
-from memgate.policy.loader import load_policy
-from memgate.stores.markdown import MarkdownStore
-from memgate.testing import run_tests
+from memworthy import Gate, MemoryLedger, RecordedJudge
+from memworthy.cli import app
+from memworthy.judges.recorded import bundled_fixture_path
+from memworthy.policy.loader import load_policy
+from memworthy.stores.markdown import MarkdownStore
+from memworthy.testing import run_tests
 
 ROOT = Path(__file__).resolve().parents[2]
 SESSIONS = ROOT / "tests" / "fixtures" / "sessions"
@@ -49,7 +49,7 @@ def test_cli_run_matches_snapshot(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     assert result.exit_code == 0, result.output
     assert "noise_dropped: 1" in result.stdout and "errors" not in result.output
     got = normalized(kb)
-    if os.environ.get("MEMGATE_UPDATE_SNAPSHOTS"):
+    if os.environ.get("MEMWORTHY_UPDATE_SNAPSHOTS"):
         shutil.rmtree(SNAPSHOT, ignore_errors=True)
         for rel, text in got.items():
             (SNAPSHOT / rel).parent.mkdir(parents=True, exist_ok=True)

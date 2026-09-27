@@ -5,12 +5,12 @@ from datetime import datetime, timezone
 
 import pytest
 
-from memgate import Candidate, DictStore, Gate, MemoryLedger, MockJudge, rule
-from memgate.engine import RuleContext, build_questions, render_state
-from memgate.judges.base import JudgeResult, Question
-from memgate.models import Memory, SourceRef
-from memgate.policy.loader import load_policy_text
-from memgate.stores.base import StoreError
+from memworthy import Candidate, DictStore, Gate, MemoryLedger, MockJudge, rule
+from memworthy.engine import RuleContext, build_questions, render_state
+from memworthy.judges.base import JudgeResult, Question
+from memworthy.models import Memory, SourceRef
+from memworthy.policy.loader import load_policy_text
+from memworthy.stores.base import StoreError
 from tests.unit.policies import BASIC
 
 FACT = {"type": "fact", "durable": 0.9, "sensitivity": 0.2, "mood": "happy"}
@@ -306,7 +306,7 @@ def test_render_state_and_questions() -> None:
 
 
 def test_default_judge_requires_key(monkeypatch: pytest.MonkeyPatch) -> None:
-    from memgate.judges.base import JudgeError
+    from memworthy.judges.base import JudgeError
 
     monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
     with pytest.raises(JudgeError, match="TYPESAFE_API_KEY"):

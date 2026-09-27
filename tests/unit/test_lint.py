@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from memgate.checks.registry import register_rule
-from memgate.policy.lint import LintWarning, lint, similarity
-from memgate.policy.loader import load_policy_text
+from memworthy.checks.registry import register_rule
+from memworthy.policy.lint import LintWarning, lint, similarity
+from memworthy.policy.loader import load_policy_text
 
 
 def codes(text: str) -> list[str]:

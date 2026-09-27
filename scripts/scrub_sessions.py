@@ -3,7 +3,7 @@
 Keeps every record's structure (keys, types, order) so parsers are tested against the real
 format, while removing private content:
 
-- secrets (MemGate's own ``secret_scan`` patterns), emails, IP addresses, phone numbers
+- secrets (Memworthy's own ``secret_scan`` patterns), emails, IP addresses, phone numbers
 - the home directory, user name and given ``--term`` words (for example project names)
 - hostnames of URLs outside a small allowlist
 - model thinking/reasoning text, encrypted content, system instructions, file snapshots
@@ -25,7 +25,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from memgate.checks.secrets import redact_text
+from memworthy.checks.secrets import redact_text
 
 MAX_STRING = 1200
 KEEP_HEAD, KEEP_TAIL = 700, 300

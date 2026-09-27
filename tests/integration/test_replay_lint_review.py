@@ -9,13 +9,13 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from memgate import Candidate, DictStore, Gate, MemoryLedger, MockJudge, RecordedJudge
-from memgate.cli import app
-from memgate.judges.recorded import bundled_fixture_path
-from memgate.ledger import JsonlLedger
-from memgate.policy.loader import load_policy, load_policy_text
-from memgate.replay import replay, replay_rules
-from memgate.testing import run_tests
+from memworthy import Candidate, DictStore, Gate, MemoryLedger, MockJudge, RecordedJudge
+from memworthy.cli import app
+from memworthy.judges.recorded import bundled_fixture_path
+from memworthy.ledger import JsonlLedger
+from memworthy.policy.loader import load_policy, load_policy_text
+from memworthy.replay import replay, replay_rules
+from memworthy.testing import run_tests
 
 ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / "tests" / "fixtures" / "ledgers" / "personal-memory.ledger.jsonl"

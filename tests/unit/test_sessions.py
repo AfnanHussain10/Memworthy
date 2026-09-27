@@ -4,23 +4,23 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from memgate.models import Turn
-from memgate.sources.claude_code import is_person_text, parse_claude_code
-from memgate.sources.codex import parse_codex, parse_output, person_text
-from memgate.sources.episodes import (
+from memworthy.models import Turn
+from memworthy.sources.claude_code import is_person_text, parse_claude_code
+from memworthy.sources.codex import parse_codex, parse_output, person_text
+from memworthy.sources.episodes import (
     files_edited,
     files_read,
     outcome,
     split_episodes,
     summarize,
 )
-from memgate.sources.pipeline import (
+from memworthy.sources.pipeline import (
     default_candidates,
     parse_session,
     referenced_paths,
     session_files,
 )
-from memgate.sources.session import ParsedSession, detect_format, read_jsonl
+from memworthy.sources.session import ParsedSession, detect_format, read_jsonl
 
 SESSIONS = Path(__file__).resolve().parents[1] / "fixtures" / "sessions"
 CC = SESSIONS / "claude_code"

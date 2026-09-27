@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from memgate.ledger import JsonlLedger, LedgerError, MemoryLedger
-from memgate.models import Candidate, Decision, Memory, Patch
-from memgate.stores.base import StoreError
-from memgate.stores.dict import DictStore
-from memgate.stores.rank import bm25_rank, tokens
+from memworthy.ledger import JsonlLedger, LedgerError, MemoryLedger
+from memworthy.models import Candidate, Decision, Memory, Patch
+from memworthy.stores.base import StoreError
+from memworthy.stores.dict import DictStore
+from memworthy.stores.rank import bm25_rank, tokens
 
 
 def mem(text: str, id_: str, subject: str = "user") -> Memory:
@@ -80,7 +80,7 @@ def test_jsonl_ledger_roundtrip(tmp_path: Path) -> None:
     led.record(d1)
     led.record(d2)
     lines = path.read_text().splitlines()
-    assert json.loads(lines[0]) == {"memgate_ledger": 1} and len(lines) == 3
+    assert json.loads(lines[0]) == {"memworthy_ledger": 1} and len(lines) == 3
     assert [d.id for d in led.read()] == [d1.id, d2.id]
     assert next(iter(led.read())) == d1
 
@@ -90,10 +90,10 @@ def test_jsonl_ledger_errors_and_env(tmp_path: Path, monkeypatch: pytest.MonkeyP
     bad.write_text('{"x": 1}\n')
     with pytest.raises(LedgerError, match="header"):
         list(JsonlLedger(bad).read())
-    bad.write_text('{"memgate_ledger": 1}\nnot json\n')
+    bad.write_text('{"memworthy_ledger": 1}\nnot json\n')
     with pytest.raises(LedgerError, match="invalid JSON"):
         list(JsonlLedger(bad).read())
-    monkeypatch.setenv("MEMGATE_LEDGER", str(tmp_path / "env.jsonl"))
+    monkeypatch.setenv("MEMWORTHY_LEDGER", str(tmp_path / "env.jsonl"))
     assert JsonlLedger().path == tmp_path / "env.jsonl"
 
 
@@ -101,5 +101,5 @@ def test_memory_ledger_jsonl() -> None:
     led = MemoryLedger()
     led.record(decision("store"))
     out = led.to_jsonl().splitlines()
-    assert out[0] == '{"memgate_ledger": 1}' and len(out) == 2
+    assert out[0] == '{"memworthy_ledger": 1}' and len(out) == 2
     assert len(list(led.read())) == 1

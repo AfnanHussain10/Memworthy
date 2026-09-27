@@ -2,22 +2,22 @@ from __future__ import annotations
 
 import pytest
 
-from memgate.checks.builtins import (
+from memworthy.checks.builtins import (
     date_parse,
     file_was_read,
     outcome_verified,
     source_is_user,
 )
-from memgate.checks.dates import classify_timing, parse_now
-from memgate.checks.registry import check, check_names, get_check
-from memgate.checks.secrets import (
+from memworthy.checks.dates import classify_timing, parse_now
+from memworthy.checks.registry import check, check_names, get_check
+from memworthy.checks.secrets import (
     find_secrets,
     redact_candidate,
     redact_text,
     secret_scan,
     shannon_entropy,
 )
-from memgate.models import Candidate, SourceRef
+from memworthy.models import Candidate, SourceRef
 
 # One positive and one negative example per vendored pattern. Values are fake.
 SECRETS = {

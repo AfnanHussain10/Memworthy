@@ -22,12 +22,12 @@ from typing import Any
 import yaml
 from dotenv import load_dotenv
 
-from memgate.engine import build_questions, render_state
-from memgate.judges.base import Question
-from memgate.judges.jev import JevJudge
-from memgate.policy.loader import load_policy
-from memgate.policy.schema import ModelSignal
-from memgate.testing import existing_memories, test_candidate
+from memworthy.engine import build_questions, render_state
+from memworthy.judges.base import Question
+from memworthy.judges.jev import JevJudge
+from memworthy.policy.loader import load_policy
+from memworthy.policy.schema import ModelSignal
+from memworthy.testing import existing_memories, test_candidate
 
 
 def _value(answer: Any, question: Question) -> float:

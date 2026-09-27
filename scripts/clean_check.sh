@@ -3,7 +3,7 @@
 # Usage: scripts/clean_check.sh 'cmd1' 'cmd2' ...   (commands run inside the copy's .venv)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DEST="${CLEAN_DIR:-$(mktemp -d)}/memgate"
+DEST="${CLEAN_DIR:-$(mktemp -d)}/memworthy"
 rm -rf "$DEST" && mkdir -p "$DEST"
 cd "$ROOT"
 git ls-files --cached --others --exclude-standard -z | xargs -0 -I{} rsync -R "{}" "$DEST/"

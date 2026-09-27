@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from memgate import __version__
-from memgate.cli import app
+from memworthy import __version__
+from memworthy.cli import app
 
 runner = CliRunner()
 
@@ -76,6 +76,6 @@ def test_synthetic_fixture_warning(tmp_path: Path) -> None:
     pol.write_text("policy: p\nversion: '1'\ntypes: {a: A, b: B}\nrules:\n  - {else: store}\n"
                    "tests:\n  - {input: x, expect: store}\n")
     fx = tmp_path / "fx.json"
-    fx.write_text(json.dumps({"memgate_fixtures": 1, "synthetic": True, "entries": {}}))
+    fx.write_text(json.dumps({"memworthy_fixtures": 1, "synthetic": True, "entries": {}}))
     r = runner.invoke(app, ["test", str(pol), "--fixtures", str(fx)])
     assert r.exit_code == 1 and "synthetic" in r.output

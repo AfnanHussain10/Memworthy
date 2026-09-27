@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from memgate.judges.base import Answer, Question
-from memgate.judges.jev import build_request, parse_response
-from memgate.judges.recorded import FixtureFile, bundled_fixture_path, fixture_key
+from memworthy.judges.base import Answer, Question
+from memworthy.judges.jev import build_request, parse_response
+from memworthy.judges.recorded import FixtureFile, bundled_fixture_path, fixture_key
 
 pytestmark = pytest.mark.contract
 POLICIES = ["personal-memory", "dev-sessions"]

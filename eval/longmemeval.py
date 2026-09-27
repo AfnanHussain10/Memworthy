@@ -1,10 +1,10 @@
-"""LongMemEval knowledge-update comparison: a simple memory pipeline with and without MemGate.
+"""LongMemEval knowledge-update comparison: a simple memory pipeline with and without Memworthy.
 
 Both arms share one LLM fact extraction per chunk of sessions (cached), so the only difference
 is the gate:
 
 - baseline: every extracted fact is stored;
-- memgate: facts are gated in chronological order by the personal-memory policy (store, update,
+- memworthy: facts are gated in chronological order by the personal-memory policy (store, update,
   supersede, reject, review), with Jev calls recorded to a fixture file so reruns are free.
 
 Each arm answers from its top-10 BM25 memories with the same LLM, and one LLM call grades both
@@ -32,12 +32,12 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from memgate import Candidate, DictStore, Gate, MemoryLedger
-from memgate.extractors import OPENROUTER_BASE_URL, OpenAICompatibleClient, parse_entries
-from memgate.judges.jev import JevJudge
-from memgate.judges.recorded import FixtureFile, RecordingJudge
-from memgate.models import Memory, SourceRef, utcnow
-from memgate.stores.rank import bm25_rank
+from memworthy import Candidate, DictStore, Gate, MemoryLedger
+from memworthy.extractors import OPENROUTER_BASE_URL, OpenAICompatibleClient, parse_entries
+from memworthy.judges.jev import JevJudge
+from memworthy.judges.recorded import FixtureFile, RecordingJudge
+from memworthy.models import Memory, SourceRef, utcnow
+from memworthy.stores.rank import bm25_rank
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "results" / "longmemeval"
@@ -182,7 +182,7 @@ async def main() -> None:
             gated, counts = await gate_facts(facts, judge)
             base = baseline_store(facts)
             a = await answer(llm, "baseline", q, top_memories(base, q["question"]))
-            b = await answer(llm, "memgate", q, top_memories(gated, q["question"]))
+            b = await answer(llm, "memworthy", q, top_memories(gated, q["question"]))
             ok_a, ok_b = await grade(llm, q, a, b)
         except Budget as exc:
             stopped = str(exc)
@@ -190,18 +190,20 @@ async def main() -> None:
         finally:
             fixtures.save()
         row = {"question_id": q["question_id"], "question": q["question"],
-               "reference": q["answer"], "facts": len(facts), "memgate_actions": counts,
-               "memgate_memories": len(gated.memories), "baseline_answer": a,
-               "memgate_answer": b, "baseline_correct": ok_a, "memgate_correct": ok_b}
+               "reference": q["answer"], "facts": len(facts), "memworthy_actions": counts,
+               "memworthy_memories": len(gated.memories), "baseline_answer": a,
+               "memworthy_answer": b, "baseline_correct": ok_a, "memworthy_correct": ok_b}
         done[q["question_id"]] = row
         with rows_path.open("a") as fh:
             fh.write(json.dumps(row) + "\n")
-        print(f"{q['question_id']}: baseline={ok_a} memgate={ok_b} facts={len(facts)}")
+        print(f"{q['question_id']}: baseline={ok_a} memworthy={ok_b} facts={len(facts)}")
     rows = list(done.values())
     summary = {
         "questions_done": len(rows), "questions_selected": len(data),
         "baseline_accuracy": sum(r["baseline_correct"] for r in rows) / len(rows) if rows else None,
-        "memgate_accuracy": sum(r["memgate_correct"] for r in rows) / len(rows) if rows else None,
+        "memworthy_accuracy": (
+            sum(r["memworthy_correct"] for r in rows) / len(rows) if rows else None
+        ),
         "llm_calls_this_run": llm.calls, "stopped": stopped,
         "complete": len(rows) >= 78, "judge_model": "jev-1.13.0",
         "llm": "EXTRACTOR_MODEL from .env (value not recorded)",

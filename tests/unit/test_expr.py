@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from memgate.policy.expr import (
+from memworthy.policy.expr import (
     ExprError,
     NameType,
     compile_expr,

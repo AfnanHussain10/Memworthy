@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from memgate import Candidate, DictStore, Gate, MemoryLedger
-from memgate.judges.base import Question
-from memgate.judges.jev import JevJudge
+from memworthy import Candidate, DictStore, Gate, MemoryLedger
+from memworthy.judges.base import Question
+from memworthy.judges.jev import JevJudge
 
 pytestmark = pytest.mark.live
 

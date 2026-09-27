@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from memgate import Candidate, DictStore, Gate, MemoryLedger, MockJudge, RecordedJudge
-from memgate.judges.recorded import bundled_fixture_path
-from memgate.models import SourceRef
-from memgate.policy.loader import load_policy
-from memgate.testing import run_tests
+from memworthy import Candidate, DictStore, Gate, MemoryLedger, MockJudge, RecordedJudge
+from memworthy.judges.recorded import bundled_fixture_path
+from memworthy.models import SourceRef
+from memworthy.policy.loader import load_policy
+from memworthy.testing import run_tests
 
 ROOT = Path(__file__).resolve().parents[2]
-DEMO = ROOT / "src" / "memgate" / "templates" / "demos" / "personal-memory.chat.json"
+DEMO = ROOT / "src" / "memworthy" / "templates" / "demos" / "personal-memory.chat.json"
 SECRETS = ROOT / "tests" / "fixtures" / "secrets.jsonl"
 
 

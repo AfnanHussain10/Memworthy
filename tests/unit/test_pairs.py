@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from memgate.pairs import PairError, bundled_pairs_path, expand_pairs, load_pairs
+from memworthy.pairs import PairError, bundled_pairs_path, expand_pairs, load_pairs
 
 
 def test_expand_cartesian_and_pair_ids() -> None:

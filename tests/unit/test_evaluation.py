@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from memgate import MockJudge
-from memgate.cli import app
-from memgate.evaluation import (
+from memworthy import MockJudge
+from memworthy.cli import app
+from memworthy.evaluation import (
     calibration,
     ece,
     fit_temperature,
@@ -20,9 +20,9 @@ from memgate.evaluation import (
     scale,
     write_plots,
 )
-from memgate.pairs import expand_pairs
-from memgate.policy.loader import load_policy
-from memgate.reporting import summary_markdown
+from memworthy.pairs import expand_pairs
+from memworthy.policy.loader import load_policy
+from memworthy.reporting import summary_markdown
 
 PAIRS = [{
     "template": "I {verb} {city}", "category": "temporary_vs_durable",
@@ -72,7 +72,7 @@ def test_calibration_math() -> None:
 def test_fixture_stats(tmp_path: Path) -> None:
     assert fixture_stats(None) == {} and fixture_stats(tmp_path / "missing.json") == {}
     f = tmp_path / "fx.json"
-    f.write_text(json.dumps({"memgate_fixtures": 1, "synthetic": False, "entries": {
+    f.write_text(json.dumps({"memworthy_fixtures": 1, "synthetic": False, "entries": {
         "a": {"latency_ms": 100, "raw": {"usage": {"input_tokens": 1000}}},
         "b": {"latency_ms": 300, "raw": {"usage": {"input_tokens": 3000}}}}}))
     s = fixture_stats(f)

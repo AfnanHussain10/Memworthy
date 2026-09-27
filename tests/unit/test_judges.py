@@ -7,10 +7,10 @@ from typing import Any
 import httpx
 import pytest
 
-from memgate.judges.base import JudgeError, Question, validate_answers
-from memgate.judges.jev import JevJudge, build_request, parse_response
-from memgate.judges.mock import MockJudge
-from memgate.judges.recorded import (
+from memworthy.judges.base import JudgeError, Question, validate_answers
+from memworthy.judges.jev import JevJudge, build_request, parse_response
+from memworthy.judges.mock import MockJudge
+from memworthy.judges.recorded import (
     FixtureFile,
     RecordedJudge,
     RecordingJudge,
@@ -162,7 +162,7 @@ async def test_jev_judge_bad_json() -> None:
 def test_jev_env_config(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TYPESAFE_API_KEY", "apikey_env")
     monkeypatch.setenv("TYPESAFE_BASE_URL", "https://gw.example/v1/")
-    monkeypatch.setenv("MEMGATE_MODEL", "jev-9")
+    monkeypatch.setenv("MEMWORTHY_MODEL", "jev-9")
     j = JevJudge()
     assert (j.api_key, j.base_url, j.model) == ("apikey_env", "https://gw.example/v1", "jev-9")
     monkeypatch.delenv("TYPESAFE_API_KEY")
@@ -191,7 +191,7 @@ async def test_mock_judge_rules_and_defaults() -> None:
 
 
 def test_validate_answers_score_not_number() -> None:
-    from memgate.judges.base import Answer
+    from memworthy.judges.base import Answer
 
     with pytest.raises(JudgeError, match="not a number"):
         validate_answers([QS[2]], {"sensitivity": Answer(name="sensitivity", value="x")})
@@ -209,7 +209,7 @@ async def test_record_then_replay(tmp_path: Path) -> None:
     assert rec.recorded == 1 and first.answers == again.answers
     rec.fixtures.save()
     data = json.loads(path.read_text())
-    assert data["memgate_fixtures"] == 1 and data["synthetic"] is False
+    assert data["memworthy_fixtures"] == 1 and data["synthetic"] is False
     [entry] = data["entries"].values()
     assert entry["raw"]["answers"]["durable"]["noul"] == 0.73
 
@@ -241,7 +241,7 @@ def test_fixture_key_depends_on_all_parts() -> None:
 def test_fixture_file_errors(tmp_path: Path) -> None:
     bad = tmp_path / "bad.json"
     bad.write_text('{"nope": 1}')
-    with pytest.raises(JudgeError, match="not a memgate fixture"):
+    with pytest.raises(JudgeError, match="not a memworthy fixture"):
         FixtureFile(bad)
     with pytest.raises(JudgeError, match="no path"):
         FixtureFile().save()

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from memgate.models import Candidate, Decision, Patch, SignalValue
-from memgate.stores.markdown import MarkdownStore, from_markdown, slugify, to_markdown
+from memworthy.models import Candidate, Decision, Patch, SignalValue
+from memworthy.stores.markdown import MarkdownStore, from_markdown, slugify, to_markdown
 
 
 def decision(action: str, text: str, target=None, patch=None, **kw):  # type: ignore[no-untyped-def]
@@ -87,7 +87,7 @@ def test_bad_files_are_ignored(tmp_path: Path) -> None:
 
 def test_roundtrip_without_extra_metadata() -> None:
     d = decision("store", "x")
-    from memgate.stores.base import new_memory
+    from memworthy.stores.base import new_memory
 
     mem = new_memory(d).model_copy(update={"metadata": {}})
     assert from_markdown(to_markdown(mem)) == mem

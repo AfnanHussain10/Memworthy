@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "memgate"
+name = "memworthy"
 version = "0.1.0"
 description = "Decide what an AI system should remember: policy-driven memory gating with typed judgments."
 readme = "README.md"
@@ -24,9 +24,14 @@ dependencies = [
   "typer>=0.12",
 ]
 
+[project.urls]
+Homepage = "https://github.com/AfnanHussain10/Memworthy"
+Repository = "https://github.com/AfnanHussain10/Memworthy"
+Issues = "https://github.com/AfnanHussain10/Memworthy/issues"
+
 [project.optional-dependencies]
 # httpx is already a core dependency, so Jev needs nothing extra; the extra exists
-# so `pip install "memgate[jev]"` documents intent and can grow later.
+# so `pip install "memworthy[jev]"` documents intent and can grow later.
 jev = []
 mem0 = ["mem0ai>=2.2,<2.3"]
 dev = [
@@ -43,13 +48,13 @@ dev = [
 ]
 
 [project.scripts]
-memgate = "memgate.cli:main"
+memworthy = "memworthy.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/memgate"]
+packages = ["src/memworthy"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/memgate", "README.md", "LICENSE", "pyproject.toml"]
+include = ["/src/memworthy", "/README.md", "/LICENSE", "/pyproject.toml"]
 
 [tool.ruff]
 line-length = 100
