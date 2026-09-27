@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Memworthy">
+  <defs><clipPath id="r"><rect width="128" height="128" rx="34"/></clipPath></defs>
+  <g clip-path="url(#r)">
+    <rect width="128" height="128" fill="#7aa9ff"/>
+    <path d="M0 0H128L0 128Z" fill="#56c98a"/>
+  </g>
+</svg>

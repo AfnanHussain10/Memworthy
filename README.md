@@ -1,6 +1,15 @@
-# Memworthy
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/AfnanHussain10/Memworthy/main/assets/logo-dark.png">
+    <img alt="Memworthy" src="https://raw.githubusercontent.com/AfnanHussain10/Memworthy/main/assets/logo-light.png" width="380">
+  </picture>
+</h1>
 
-**Memory should be decided, not just extracted.**
+<p align="center"><strong>Memory should be decided, not just extracted.</strong></p>
+
+<p align="center">
+  <img alt="Memworthy playground: a trip is ignored, a move updates memory, and a correction rolls it back" src="https://raw.githubusercontent.com/AfnanHussain10/Memworthy/main/assets/demo.gif" width="800">
+</p>
 
 Agent memory usually fails at the decision step, not at retrieval. Extraction pipelines are generous, so memory fills up with errors:
 - temporary states stored as permanent facts ("in Dubai this week" becomes "lives in Dubai")
