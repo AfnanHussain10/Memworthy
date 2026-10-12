@@ -23,6 +23,7 @@ DEFAULT_JUDGE = "jev"
 BUILTIN_JUDGES = {
     "jev": "memworthy.judges.jev:JevJudge",
     "openai": "memworthy.judges.openai_decisions:OpenAIDecisionsJudge",
+    "microsoft": "memworthy.judges.foundry:FoundryDecisionJudge",
 }
 
 

@@ -84,7 +84,7 @@ def test_missing_key_is_a_judge_error(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_unknown_judge_lists_available() -> None:
-    with pytest.raises(JudgeError, match=r"unknown judge 'gpt'.*jev, openai"):
+    with pytest.raises(JudgeError, match=r"unknown judge 'gpt'.*jev, microsoft, openai"):
         registry.get_judge("gpt")
 
 

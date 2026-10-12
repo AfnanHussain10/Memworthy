@@ -1,0 +1,585 @@
+{
+ "source": "real Microsoft-Decision-1 responses from a Microsoft Foundry deployment, recorded 2026-10-12",
+ "synthetic": false,
+ "entries": [
+  {
+   "state": "New message: I live in Dubai\nAbout: user",
+   "questions": [
+    {
+     "name": "kind",
+     "kind": "choice",
+     "prompt": "What kind of information is this?",
+     "options": {
+      "fact": "A durable fact",
+      "temporary": "A short-lived state"
+     },
+     "levels": null
+    },
+    {
+     "name": "durable",
+     "kind": "noul",
+     "prompt": "Will this still be true in a year?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "sens",
+     "kind": "score",
+     "prompt": "How sensitive is this?",
+     "options": null,
+     "levels": [
+      "Low",
+      "Medium",
+      "High"
+     ]
+    }
+   ],
+   "raw": {
+    "model": "microsoft-decision-1",
+    "answers": {
+     "durable": {
+      "noul": 0.8175758006915586,
+      "type": "noul"
+     },
+     "kind": {
+      "choice": "fact",
+      "confidence": 0.7340715299116014,
+      "probabilities": {
+       "fact": 0.8670357649558007,
+       "temporary": 0.13296423504419938
+      },
+      "type": "choice"
+     },
+     "sens": {
+      "confidence": 0.2736293338804324,
+      "legend": {
+       "0": "Low",
+       "1": "Medium",
+       "2": "High"
+      },
+      "probabilities": {
+       "0": 0.45515032726537696,
+       "1": 0.5157528892536216,
+       "2": 0.029096783481001455
+      },
+      "score": 0.5739464562156246,
+      "type": "score"
+     }
+    },
+    "usage": {
+     "input_tokens": 92,
+     "output_tokens": 3
+    }
+   }
+  },
+  {
+   "state": "New message: My sister Maya is a nurse\nAbout: user\nSource: user message",
+   "questions": [
+    {
+     "name": "type",
+     "kind": "choice",
+     "prompt": "What kind of information is this?",
+     "options": {
+      "fact": "A durable fact about the person themselves (home, job, education, background, possessions, habits)",
+      "preference": "A lasting like, dislike or way the person wants things done",
+      "relationship": "Who another person is to the person (family member, partner, friend, colleague)",
+      "temporary": "A short-lived state such as travel, mood or this week's plans",
+      "intent": "A plan, wish or option being considered, not yet true",
+      "hypothetical": "A conditional or imagined situation",
+      "noise": "Small talk or information with no lasting value"
+     },
+     "levels": null
+    },
+    {
+     "name": "durable",
+     "kind": "noul",
+     "prompt": "Is this a lasting fact, preference or relationship rather than a short-lived state or passing plan?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "explicit",
+     "kind": "noul",
+     "prompt": "Did the person state this directly rather than it being inferred?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "about_subject",
+     "kind": "noul",
+     "prompt": "Is this about the stated subject's own life, preferences or wishes (including who people are to them), rather than a fact about another person's life, job, habits or traits?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "sensitivity",
+     "kind": "score",
+     "prompt": "How sensitive is this personal information?",
+     "options": null,
+     "levels": [
+      "Not sensitive",
+      "Personal",
+      "Highly sensitive (health, finances, religion, precise location)"
+     ]
+    },
+    {
+     "name": "retraction",
+     "kind": "noul",
+     "prompt": "Does the message walk back, soften or deny something the person said earlier, rather than report a new change in their life?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "conflict",
+     "kind": "choice",
+     "prompt": "Which existing memory is about the same thing (same home, job, habit, preference or possession) and is changed, replaced or contradicted by the new message? Pick none if the new message only adds to what is known.",
+     "options": {
+      "m0": "I moved to Porto last month",
+      "none": "No existing memory is updated or contradicted"
+     },
+     "levels": null
+    }
+   ],
+   "raw": {
+    "model": "microsoft-decision-1",
+    "answers": {
+     "about_subject": {
+      "noul": 0.43782727365126595,
+      "type": "noul"
+     },
+     "conflict": {
+      "choice": "none",
+      "confidence": 0.9956345671600191,
+      "probabilities": {
+       "m0": 0.0021827164199904807,
+       "none": 0.9978172835800095
+      },
+      "type": "choice"
+     },
+     "durable": {
+      "noul": 0.997199068944857,
+      "type": "noul"
+     },
+     "explicit": {
+      "noul": 0.9968273160106705,
+      "type": "noul"
+     },
+     "retraction": {
+      "noul": 0.003172713796046981,
+      "type": "noul"
+     },
+     "sensitivity": {
+      "confidence": 0.6838019718250323,
+      "legend": {
+       "0": "Not sensitive",
+       "1": "Personal",
+       "2": "Highly sensitive (health, finances, religion, precise location)"
+      },
+      "probabilities": {
+       "0": 0.19954133245920913,
+       "1": 0.7892013145500215,
+       "2": 0.011257352990769331
+      },
+      "score": 0.8117160205315602,
+      "type": "score"
+     },
+     "type": {
+      "choice": "relationship",
+      "confidence": 0.9689404133748963,
+      "probabilities": {
+       "fact": 0.020201804439121007,
+       "hypothetical": 0.0018790609690415474,
+       "intent": 0.00146341415412847,
+       "noise": 0.00146341415412847,
+       "preference": 0.00113970808919303,
+       "relationship": 0.9733774971784825,
+       "temporary": 0.00047510101590494014
+      },
+      "type": "choice"
+     }
+    },
+    "usage": {
+     "input_tokens": 407,
+     "output_tokens": 7
+    }
+   }
+  },
+  {
+   "state": "New message: I live in Lisbon\nAbout: user\nSource: user message",
+   "questions": [
+    {
+     "name": "type",
+     "kind": "choice",
+     "prompt": "What kind of information is this?",
+     "options": {
+      "fact": "A durable fact about the person themselves (home, job, education, background, possessions, habits)",
+      "preference": "A lasting like, dislike or way the person wants things done",
+      "relationship": "Who another person is to the person (family member, partner, friend, colleague)",
+      "temporary": "A short-lived state such as travel, mood or this week's plans",
+      "intent": "A plan, wish or option being considered, not yet true",
+      "hypothetical": "A conditional or imagined situation",
+      "noise": "Small talk or information with no lasting value"
+     },
+     "levels": null
+    },
+    {
+     "name": "durable",
+     "kind": "noul",
+     "prompt": "Is this a lasting fact, preference or relationship rather than a short-lived state or passing plan?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "explicit",
+     "kind": "noul",
+     "prompt": "Did the person state this directly rather than it being inferred?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "about_subject",
+     "kind": "noul",
+     "prompt": "Is this about the stated subject's own life, preferences or wishes (including who people are to them), rather than a fact about another person's life, job, habits or traits?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "sensitivity",
+     "kind": "score",
+     "prompt": "How sensitive is this personal information?",
+     "options": null,
+     "levels": [
+      "Not sensitive",
+      "Personal",
+      "Highly sensitive (health, finances, religion, precise location)"
+     ]
+    },
+    {
+     "name": "retraction",
+     "kind": "noul",
+     "prompt": "Does the message walk back, soften or deny something the person said earlier, rather than report a new change in their life?",
+     "options": null,
+     "levels": null
+    }
+   ],
+   "raw": {
+    "model": "microsoft-decision-1",
+    "answers": {
+     "about_subject": {
+      "noul": 0.9988304898364709,
+      "type": "noul"
+     },
+     "durable": {
+      "noul": 0.9971990694733348,
+      "type": "noul"
+     },
+     "explicit": {
+      "noul": 0.9990889485726385,
+      "type": "noul"
+     },
+     "retraction": {
+      "noul": 0.004609643382618384,
+      "type": "noul"
+     },
+     "sensitivity": {
+      "confidence": 0.8051011981248251,
+      "legend": {
+       "0": "Not sensitive",
+       "1": "Personal",
+       "2": "Highly sensitive (health, finances, religion, precise location)"
+      },
+      "probabilities": {
+       "0": 0.09170443753791369,
+       "1": 0.87006746541655,
+       "2": 0.03822809704553632
+      },
+      "score": 0.9465236595076226,
+      "type": "score"
+     },
+     "type": {
+      "choice": "fact",
+      "confidence": 0.992106577323067,
+      "probabilities": {
+       "fact": 0.9932342091340574,
+       "hypothetical": 0.0007992881695207843,
+       "intent": 0.000905712152847092,
+       "noise": 0.0019173926426235951,
+       "preference": 0.0010263063249225071,
+       "relationship": 0.0007992881695207843,
+       "temporary": 0.0013178034065078868
+      },
+      "type": "choice"
+     }
+    },
+    "usage": {
+     "input_tokens": 326,
+     "output_tokens": 6
+    }
+   }
+  },
+  {
+   "state": "New message: I moved to Porto last month\nAbout: user\nSource: user message",
+   "questions": [
+    {
+     "name": "type",
+     "kind": "choice",
+     "prompt": "What kind of information is this?",
+     "options": {
+      "fact": "A durable fact about the person themselves (home, job, education, background, possessions, habits)",
+      "preference": "A lasting like, dislike or way the person wants things done",
+      "relationship": "Who another person is to the person (family member, partner, friend, colleague)",
+      "temporary": "A short-lived state such as travel, mood or this week's plans",
+      "intent": "A plan, wish or option being considered, not yet true",
+      "hypothetical": "A conditional or imagined situation",
+      "noise": "Small talk or information with no lasting value"
+     },
+     "levels": null
+    },
+    {
+     "name": "durable",
+     "kind": "noul",
+     "prompt": "Is this a lasting fact, preference or relationship rather than a short-lived state or passing plan?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "explicit",
+     "kind": "noul",
+     "prompt": "Did the person state this directly rather than it being inferred?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "about_subject",
+     "kind": "noul",
+     "prompt": "Is this about the stated subject's own life, preferences or wishes (including who people are to them), rather than a fact about another person's life, job, habits or traits?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "sensitivity",
+     "kind": "score",
+     "prompt": "How sensitive is this personal information?",
+     "options": null,
+     "levels": [
+      "Not sensitive",
+      "Personal",
+      "Highly sensitive (health, finances, religion, precise location)"
+     ]
+    },
+    {
+     "name": "retraction",
+     "kind": "noul",
+     "prompt": "Does the message walk back, soften or deny something the person said earlier, rather than report a new change in their life?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "conflict",
+     "kind": "choice",
+     "prompt": "Which existing memory is about the same thing (same home, job, habit, preference or possession) and is changed, replaced or contradicted by the new message? Pick none if the new message only adds to what is known.",
+     "options": {
+      "m0": "I live in Lisbon",
+      "none": "No existing memory is updated or contradicted"
+     },
+     "levels": null
+    }
+   ],
+   "raw": {
+    "model": "microsoft-decision-1",
+    "answers": {
+     "about_subject": {
+      "noul": 0.9982992773685231,
+      "type": "noul"
+     },
+     "conflict": {
+      "choice": "m0",
+      "confidence": 0.7039055926597895,
+      "probabilities": {
+       "m0": 0.8519527963298947,
+       "none": 0.1480472036701053
+      },
+      "type": "choice"
+     },
+     "durable": {
+      "noul": 0.9914225070634908,
+      "type": "noul"
+     },
+     "explicit": {
+      "noul": 0.9978172833458964,
+      "type": "noul"
+     },
+     "retraction": {
+      "noul": 0.0021827481454373505,
+      "type": "noul"
+     },
+     "sensitivity": {
+      "confidence": 0.776487655332379,
+      "legend": {
+       "0": "Not sensitive",
+       "1": "Personal",
+       "2": "Highly sensitive (health, finances, religion, precise location)"
+      },
+      "probabilities": {
+       "0": 0.079154568368124,
+       "1": 0.850991770221586,
+       "2": 0.06985366141029002
+      },
+      "score": 0.9906990930421661,
+      "type": "score"
+     },
+     "type": {
+      "choice": "fact",
+      "confidence": 0.986588874019172,
+      "probabilities": {
+       "fact": 0.9885047491592902,
+       "hypothetical": 0.0014861564958236569,
+       "intent": 0.0014861564958236569,
+       "noise": 0.0024502578262536293,
+       "preference": 0.0014861564958236569,
+       "relationship": 0.0010214194261851596,
+       "temporary": 0.003565104100800087
+      },
+      "type": "choice"
+     }
+    },
+    "usage": {
+     "input_tokens": 405,
+     "output_tokens": 7
+    }
+   }
+  },
+  {
+   "state": "New message: I'm at the airport right now\nAbout: user\nSource: user message",
+   "questions": [
+    {
+     "name": "type",
+     "kind": "choice",
+     "prompt": "What kind of information is this?",
+     "options": {
+      "fact": "A durable fact about the person themselves (home, job, education, background, possessions, habits)",
+      "preference": "A lasting like, dislike or way the person wants things done",
+      "relationship": "Who another person is to the person (family member, partner, friend, colleague)",
+      "temporary": "A short-lived state such as travel, mood or this week's plans",
+      "intent": "A plan, wish or option being considered, not yet true",
+      "hypothetical": "A conditional or imagined situation",
+      "noise": "Small talk or information with no lasting value"
+     },
+     "levels": null
+    },
+    {
+     "name": "durable",
+     "kind": "noul",
+     "prompt": "Is this a lasting fact, preference or relationship rather than a short-lived state or passing plan?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "explicit",
+     "kind": "noul",
+     "prompt": "Did the person state this directly rather than it being inferred?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "about_subject",
+     "kind": "noul",
+     "prompt": "Is this about the stated subject's own life, preferences or wishes (including who people are to them), rather than a fact about another person's life, job, habits or traits?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "sensitivity",
+     "kind": "score",
+     "prompt": "How sensitive is this personal information?",
+     "options": null,
+     "levels": [
+      "Not sensitive",
+      "Personal",
+      "Highly sensitive (health, finances, religion, precise location)"
+     ]
+    },
+    {
+     "name": "retraction",
+     "kind": "noul",
+     "prompt": "Does the message walk back, soften or deny something the person said earlier, rather than report a new change in their life?",
+     "options": null,
+     "levels": null
+    },
+    {
+     "name": "conflict",
+     "kind": "choice",
+     "prompt": "Which existing memory is about the same thing (same home, job, habit, preference or possession) and is changed, replaced or contradicted by the new message? Pick none if the new message only adds to what is known.",
+     "options": {
+      "m0": "I moved to Porto last month",
+      "none": "No existing memory is updated or contradicted"
+     },
+     "levels": null
+    }
+   ],
+   "raw": {
+    "model": "microsoft-decision-1",
+    "answers": {
+     "about_subject": {
+      "noul": 0.9975273765464875,
+      "type": "noul"
+     },
+     "conflict": {
+      "choice": "none",
+      "confidence": 0.9866142960215591,
+      "probabilities": {
+       "m0": 0.006692851989220403,
+       "none": 0.9933071480107796
+      },
+      "type": "choice"
+     },
+     "durable": {
+      "noul": 0.002472641160344671,
+      "type": "noul"
+     },
+     "explicit": {
+      "noul": 0.9980732644421745,
+      "type": "noul"
+     },
+     "retraction": {
+      "noul": 0.0017007503693334477,
+      "type": "noul"
+     },
+     "sensitivity": {
+      "confidence": 0.17960965106306404,
+      "legend": {
+       "0": "Not sensitive",
+       "1": "Personal",
+       "2": "Highly sensitive (health, finances, religion, precise location)"
+      },
+      "probabilities": {
+       "0": 0.14709129127145615,
+       "1": 0.39983560801983453,
+       "2": 0.4530731007087094
+      },
+      "score": 1.3059818094372533,
+      "type": "score"
+     },
+     "type": {
+      "choice": "temporary",
+      "confidence": 0.9614776082449584,
+      "probabilities": {
+       "fact": 0.001647367976474533,
+       "hypothetical": 0.001453797136655828,
+       "intent": 0.0018667124741739453,
+       "noise": 0.025769164689942718,
+       "preference": 0.001282971470085122,
+       "relationship": 0.0009991791855605645,
+       "temporary": 0.9669808070671073
+      },
+      "type": "choice"
+     }
+    },
+    "usage": {
+     "input_tokens": 408,
+     "output_tokens": 7
+    }
+   }
+  }
+ ]
+}

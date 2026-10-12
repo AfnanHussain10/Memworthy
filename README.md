@@ -22,7 +22,7 @@ Agent memory usually fails at the decision step, not at retrieval. Extraction pi
 
 Memworthy is a small Python library that sits between whatever proposes memories and whatever stores them. For each candidate it:
 1. runs deterministic code checks
-2. asks a decision model one batch of typed questions (TypeSafe's Jev by default; OpenAI's Decisions API or your own provider also work)
+2. asks a decision model one batch of typed questions (TypeSafe's Jev by default; OpenAI's Decisions API, Microsoft-Decision-1 on Foundry or your own provider also work)
 3. applies an ordered, user-editable policy to choose an action: `store`, `update`, `merge`, `supersede`, `reject`, `review`, `redact` or `store_labeled`
 
 Every decision is written to a ledger you can audit, replay under a changed policy, and review.
@@ -84,12 +84,12 @@ memworthy run dev-sessions ~/.claude/projects --store markdown:~/kb --extractor 
 
 | Command | What it does |
 | --- | --- |
-| `memworthy test POLICY [--judge recorded\|mock\|jev\|openai\|PLUGIN] [--pairs FILE]` | Runs the policy's tests; exits 1 on failure (CI-friendly with recorded answers) |
+| `memworthy test POLICY [--judge recorded\|mock\|jev\|openai\|microsoft\|PLUGIN] [--pairs FILE]` | Runs the policy's tests; exits 1 on failure (CI-friendly with recorded answers) |
 | `memworthy run POLICY SOURCE [--store dict\|markdown:PATH\|mem0] [--dry-run]` | Gates a candidate file, chat JSON or session folder |
 | `memworthy replay LEDGER POLICY [--only-changed]` | Shows which past decisions a policy change would flip (no API calls when prompts are unchanged) |
 | `memworthy lint POLICY [--strict]` | Overlapping types, unused signals, unreachable rules, vague prompts |
 | `memworthy review LEDGER [--export-tests FILE]` | Accept, override or skip queued decisions; overrides become tests |
-| `memworthy record POLICY INPUT [--judge jev\|openai\|PLUGIN]` | Records live judge answers as fixtures |
+| `memworthy record POLICY INPUT [--judge jev\|openai\|microsoft\|PLUGIN]` | Records live judge answers as fixtures |
 | `memworthy eval POLICY` | Contrast-pair metrics, calibration and plots into `eval/results/` |
 
 ## Judge providers
@@ -100,8 +100,9 @@ The judge answers the typed questions. Pick one with `--judge` or `MEMWORTHY_JUD
 | --- | --- |
 | `jev` (default) | `TYPESAFE_API_KEY`, optional `TYPESAFE_BASE_URL`, `MEMWORTHY_MODEL` (default `jev-1.13.0`) |
 | `openai` | `OPENAI_API_KEY`, optional `OPENAI_BASE_URL`, `OPENAI_DECISIONS_MODEL` (default `gpt-6-luna`); uses the [Decisions API](https://developers.openai.com/api/docs/guides/decisions), in public beta |
+| `microsoft` | `AZURE_FOUNDRY_ENDPOINT`, `AZURE_FOUNDRY_API_KEY`, optional `AZURE_FOUNDRY_DEPLOYMENT` (found automatically when unset); [Microsoft-Decision-1](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/use-foundry-models-microsoft-decision) deployed in your Foundry resource (API-key auth) |
 
-The bundled templates' thresholds and evaluation results come from Jev. OpenAI's probabilities are on a different scale, so run `memworthy eval` with your judge before you trust a template's cut-offs.
+The bundled templates' thresholds and evaluation results come from Jev. Other providers' probabilities are on a different scale, so run `memworthy eval` with your judge before you trust a template's cut-offs.
 
 To ship your own provider as a package, implement the `memworthy.Judge` protocol (see `memworthy/judges/openai_decisions.py` for a complete HTTP example) and register a zero-argument factory that reads its settings from the environment:
 
@@ -109,6 +110,8 @@ To ship your own provider as a package, implement the `memworthy.Judge` protocol
 [project.entry-points."memworthy.judges"]
 myprovider = "memworthy_myprovider:MyJudge"
 ```
+
+If your provider speaks the System One API (the format Jev and Microsoft-Decision-1 use), you don't need to write the request and response mapping: return a configured `memworthy.SystemOneJudge(api_key=..., base_url=..., model=..., auth="bearer" or "api-key")` from your factory.
 
 After `pip install`, `--judge myprovider` and `MEMWORTHY_JUDGE=myprovider` work. `memworthy.available_judges()` lists what is installed.
 

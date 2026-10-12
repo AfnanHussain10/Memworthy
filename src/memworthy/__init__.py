@@ -30,11 +30,12 @@ from memworthy.stores.dict import DictStore
 __version__ = "0.1.0"
 
 __all__ = [
-    "Answer", "Candidate", "Decision", "DictStore", "Episode", "Gate", "GatedMemory",
+    "Answer", "Candidate", "Decision", "DictStore", "Episode", "FoundryDecisionJudge", "Gate",
+    "GatedMemory",
     "JevJudge", "JsonlLedger", "Judge", "JudgeError", "JudgeResult", "MarkdownStore",
     "Memory", "MemoryLedger", "MockJudge", "OpenAIDecisionsJudge", "Patch", "Policy",
     "PolicyError", "PolicySpec", "Question", "RecordedJudge", "RuleContext", "SignalValue",
-    "SourceRef", "Turn",
+    "SourceRef", "SystemOneJudge", "Turn",
     "available_judges", "check", "get_judge", "load_policy", "rule",
 ]
 
@@ -44,6 +45,14 @@ def __getattr__(name: str) -> Any:
         from memworthy.judges.jev import JevJudge
 
         return JevJudge
+    if name == "SystemOneJudge":
+        from memworthy.judges.systemone import SystemOneJudge
+
+        return SystemOneJudge
+    if name == "FoundryDecisionJudge":
+        from memworthy.judges.foundry import FoundryDecisionJudge
+
+        return FoundryDecisionJudge
     if name == "OpenAIDecisionsJudge":
         from memworthy.judges.openai_decisions import OpenAIDecisionsJudge
 
