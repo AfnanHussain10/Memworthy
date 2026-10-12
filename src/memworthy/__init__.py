@@ -11,6 +11,7 @@ from memworthy.gate import Gate
 from memworthy.judges.base import Answer, Judge, JudgeError, JudgeResult, Question
 from memworthy.judges.mock import MockJudge
 from memworthy.judges.recorded import RecordedJudge
+from memworthy.judges.registry import available_judges, get_judge
 from memworthy.ledger import JsonlLedger, MemoryLedger
 from memworthy.models import (
     Candidate,
@@ -31,9 +32,10 @@ __version__ = "0.1.0"
 __all__ = [
     "Answer", "Candidate", "Decision", "DictStore", "Episode", "Gate", "GatedMemory",
     "JevJudge", "JsonlLedger", "Judge", "JudgeError", "JudgeResult", "MarkdownStore",
-    "Memory", "MemoryLedger", "MockJudge", "Patch", "Policy", "PolicyError", "PolicySpec",
-    "Question", "RecordedJudge", "RuleContext", "SignalValue", "SourceRef", "Turn",
-    "check", "load_policy", "rule",
+    "Memory", "MemoryLedger", "MockJudge", "OpenAIDecisionsJudge", "Patch", "Policy",
+    "PolicyError", "PolicySpec", "Question", "RecordedJudge", "RuleContext", "SignalValue",
+    "SourceRef", "Turn",
+    "available_judges", "check", "get_judge", "load_policy", "rule",
 ]
 
 
@@ -42,6 +44,10 @@ def __getattr__(name: str) -> Any:
         from memworthy.judges.jev import JevJudge
 
         return JevJudge
+    if name == "OpenAIDecisionsJudge":
+        from memworthy.judges.openai_decisions import OpenAIDecisionsJudge
+
+        return OpenAIDecisionsJudge
     if name == "MarkdownStore":
         return importlib.import_module("memworthy.stores.markdown").MarkdownStore
     if name in ("GatedMemory", "Mem0Store"):

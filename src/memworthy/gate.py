@@ -43,13 +43,13 @@ class Gate:
         apply: bool = True,
         concurrency: int = 8,
     ) -> None:
-        """Load the policy; default judge is JevJudge from env, default ledger is JSONL."""
+        """Load the policy; default judge is get_judge() (MEMWORTHY_JUDGE, else Jev)."""
         self.policy = load_policy(policy)
         self.store = store
         if judge is None:
-            from memworthy.judges.jev import JevJudge
+            from memworthy.judges.registry import get_judge
 
-            judge = JevJudge()
+            judge = get_judge()
         self.judge = judge
         self.ledger: Ledger = ledger if ledger is not None else JsonlLedger()
         self.extractor = extractor

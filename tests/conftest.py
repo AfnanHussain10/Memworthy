@@ -20,9 +20,9 @@ if load_dotenv is not None:
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    if os.environ.get("TYPESAFE_API_KEY"):
-        return
-    skip = pytest.mark.skip(reason="TYPESAFE_API_KEY not set")
     for item in items:
-        if "live" in item.keywords:
-            item.add_marker(skip)
+        if "live" not in item.keywords:
+            continue
+        key = "OPENAI_API_KEY" if "openai" in item.nodeid else "TYPESAFE_API_KEY"
+        if not os.environ.get(key):
+            item.add_marker(pytest.mark.skip(reason=f"{key} not set"))

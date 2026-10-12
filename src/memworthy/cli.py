@@ -22,11 +22,12 @@ from memworthy.cli_support import (
     load_chat,
     load_env,
     make_judge,
+    make_live_judge,
     make_store,
     result_json,
     signal_summary,
 )
-from memworthy.judges.base import Judge, JudgeError
+from memworthy.judges.base import Judge
 from memworthy.judges.recorded import FixtureFile, bundled_fixture_path
 from memworthy.pairs import PairError, bundled_pairs_path, load_pairs
 from memworthy.policy.loader import Policy
@@ -46,7 +47,7 @@ def version() -> None:
 @app.command("test")
 def test_cmd(
     policy: str = typer.Argument(..., help="Template name or policy file"),
-    judge: str = typer.Option("recorded", help="mock, recorded or jev"),
+    judge: str = typer.Option("recorded", help="mock, recorded, jev, openai or a plugin"),
     fixtures: Path | None = typer.Option(None, help="RecordedJudge fixture file"),
     pairs: Path | None = typer.Option(None, help="Run a contrast-pair file instead of tests"),
     as_json: bool = typer.Option(False, "--json", help="Machine-readable output"),
@@ -88,7 +89,8 @@ def run(
     fmt: str = typer.Option("auto", "--format",
                             help="candidates, chat, claude_code, codex or auto"),
     store: str = typer.Option("dict", help="dict, markdown:PATH or mem0"),
-    judge: str = typer.Option("jev", help="jev, recorded or mock"),
+    judge: str = typer.Option("", help="jev, openai, a plugin, recorded or mock "
+                               "(default MEMWORTHY_JUDGE or jev)"),
     fixtures: Path | None = typer.Option(None, help="Fixture file for --judge recorded"),
     extractor: str = typer.Option("none", help="none or llm (OpenRouter, EXTRACTOR_MODEL)"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Decide only; write nothing"),
@@ -151,18 +153,16 @@ def record(
                                 ".chat.json, a session folder, or a candidates file"),
     out: Path | None = typer.Option(None, help="Fixture file (default: bundled path)"),
     fresh: bool = typer.Option(False, help="Drop existing entries before recording"),
+    judge: str = typer.Option("", help="Live judge provider: jev, openai or a plugin "
+                              "(default MEMWORTHY_JUDGE or jev)"),
 ) -> None:
-    """Make live Jev calls and write RecordedJudge fixtures."""
+    """Make live judge calls and write RecordedJudge fixtures."""
     load_env()
-    from memworthy.judges.jev import JevJudge
     from memworthy.judges.recorded import RecordingJudge
 
     pol = get_policy(policy)
     path = out or bundled_fixture_path(pol.name) or default_fixture_path(pol)
-    try:
-        live = JevJudge()
-    except JudgeError as exc:
-        raise fail(str(exc)) from None
+    live = make_live_judge(judge or None)
     recorder = RecordingJudge(live, FixtureFile(path))
     if fresh:
         recorder.fixtures.entries = {}
@@ -301,7 +301,7 @@ def review(
 def eval_cmd(
     policy: str = typer.Argument(..., help="Template name or policy file"),
     pairs: Path | None = typer.Option(None, help="Pair file (default: the bundled one)"),
-    judge: str = typer.Option("recorded", help="recorded or jev"),
+    judge: str = typer.Option("recorded", help="recorded, jev, openai or a plugin"),
     fixtures: Path | None = typer.Option(None, help="Fixture file for --judge recorded"),
     out: Path = typer.Option(Path("eval/results"), help="Output folder"),
 ) -> None:

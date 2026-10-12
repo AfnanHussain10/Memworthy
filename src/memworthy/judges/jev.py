@@ -5,21 +5,16 @@ Contract verified against https://docs.typesafe.ai/api (see the tech spec's Jev 
 
 from __future__ import annotations
 
-import asyncio
-import logging
 import os
-import time
 from typing import Any
 
 import httpx
 
+from memworthy.judges._http import post_json
 from memworthy.judges.base import Answer, JudgeError, JudgeResult, Question, validate_answers
-
-log = logging.getLogger("memworthy.judges.jev")
 
 DEFAULT_BASE_URL = "https://api.typesafe.ai/v1"
 DEFAULT_MODEL = "jev-1.13.0"
-RETRY_STATUS = frozenset({429, 500, 502, 503, 504, 529})
 
 
 def build_request(model: str, state: str, questions: list[Question]) -> dict[str, Any]:
@@ -111,43 +106,12 @@ class JevJudge:
 
     async def raw(self, state: str, questions: list[Question]) -> tuple[dict[str, Any], int]:
         """Send the request with retries; return the raw JSON body and latency in ms."""
-        body = build_request(self.model, state, questions)
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        url = f"{self.base_url}/systemone"
-        client = self._client or httpx.AsyncClient(timeout=self.timeout)
-        start = time.perf_counter()
-        try:
-            for attempt in range(self.retries + 1):
-                try:
-                    resp = await client.post(url, json=body, headers=headers,
-                                             timeout=self.timeout)
-                except (httpx.TransportError, httpx.TimeoutException) as exc:
-                    if attempt >= self.retries:
-                        raise JudgeError(f"Jev request failed: {type(exc).__name__}") from None
-                    log.warning("Jev network error (%s); retrying", type(exc).__name__)
-                else:
-                    if resp.status_code == 200:
-                        try:
-                            data = resp.json()
-                        except ValueError:
-                            raise JudgeError("Jev returned invalid JSON") from None
-                        if not isinstance(data, dict):
-                            raise JudgeError("Jev returned a non-object body")
-                        return data, int((time.perf_counter() - start) * 1000)
-                    if resp.status_code not in RETRY_STATUS or attempt >= self.retries:
-                        raise JudgeError(f"Jev returned HTTP {resp.status_code}: "
-                                         f"{_error_detail(resp)}")
-                    log.warning("Jev HTTP %s; retrying", resp.status_code)
-                await asyncio.sleep(self.backoff * (2**attempt))
-            raise JudgeError("Jev request failed")  # pragma: no cover
-        finally:
-            if self._client is None:
-                await client.aclose()
+        return await post_json(f"{self.base_url}/systemone",
+                               build_request(self.model, state, questions),
+                               {"Authorization": f"Bearer {self.api_key}"}, label="Jev",
+                               timeout=self.timeout, retries=self.retries,
+                               backoff=self.backoff, client=self._client)
 
-
-def _error_detail(resp: httpx.Response) -> str:
-    try:
-        text = resp.text
-    except Exception:  # pragma: no cover
-        return ""
-    return text[:300]
+    def parse_raw(self, questions: list[Question], data: dict[str, Any]) -> dict[str, Answer]:
+        """Map a raw System One response (as returned by :meth:`raw`) to answers."""
+        return parse_response(questions, data)

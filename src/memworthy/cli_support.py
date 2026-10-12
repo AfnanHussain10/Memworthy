@@ -19,7 +19,7 @@ from memworthy.sources.session import detect_format, read_jsonl
 from memworthy.stores.base import MemoryStore
 from memworthy.testing import TestResult
 
-JUDGES = ("mock", "recorded", "jev")
+LOCAL_JUDGES = ("mock", "recorded")
 FORMATS = ("candidates", "chat", "claude_code", "codex", "auto")
 
 
@@ -63,9 +63,7 @@ def fixtures_for(policy: Policy, fixtures: Path | None) -> Path:
 
 
 def make_judge(kind: str, policy: Policy, fixtures: Path | None) -> Judge:
-    """Build the judge selected on the command line."""
-    if kind not in JUDGES:
-        raise fail(f"--judge must be one of {', '.join(JUDGES)}")
+    """Build the judge selected on the command line: mock, recorded or a provider."""
     if kind == "mock":
         return MockJudge()
     if kind == "recorded":
@@ -74,10 +72,18 @@ def make_judge(kind: str, policy: Policy, fixtures: Path | None) -> Judge:
             print("warning: fixtures are synthetic (hand-authored); results are not "
                   "evidence of real judge behavior", file=sys.stderr)
         return judge
-    from memworthy.judges.jev import JevJudge
+    return make_live_judge(kind or None)
 
+
+def make_live_judge(kind: str | None) -> Judge:
+    """Build a provider judge (jev, openai or a plugin) or exit with its error."""
+    from memworthy.judges.registry import available_judges, get_judge
+
+    if kind is not None and kind not in available_judges():
+        names = [*LOCAL_JUDGES, *sorted(available_judges())]
+        raise fail(f"--judge must be one of {', '.join(names)}")
     try:
-        return JevJudge()
+        return get_judge(kind)
     except JudgeError as exc:
         raise fail(str(exc)) from None
 

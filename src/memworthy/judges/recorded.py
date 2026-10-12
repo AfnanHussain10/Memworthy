@@ -142,11 +142,10 @@ class RecordingJudge:
                                latency_ms=int(entry.get("latency_ms", 0)))
         raw: dict[str, Any] | None = None
         raw_fn = getattr(self.inner, "raw", None)
-        if raw_fn is not None:
-            from memworthy.judges.jev import parse_response
-
+        parse_fn = getattr(self.inner, "parse_raw", None)
+        if raw_fn is not None and parse_fn is not None:
             raw, latency = await raw_fn(state, questions)
-            answers = parse_response(questions, raw)
+            answers = parse_fn(questions, raw)
             result = JudgeResult(answers=answers, model=str(raw.get("model") or self.model),
                                  latency_ms=latency)
         else:

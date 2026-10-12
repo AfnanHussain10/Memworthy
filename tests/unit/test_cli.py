@@ -67,8 +67,17 @@ def test_errors(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
     r = runner.invoke(app, ["test", str(pol), "--judge", "jev"])
     assert r.exit_code == 1 and "TYPESAFE_API_KEY" in r.output
+    monkeypatch.delenv("MEMWORTHY_JUDGE", raising=False)
     r = runner.invoke(app, ["record", str(pol), "tests", "--out", str(tmp_path / "f.json")])
     assert r.exit_code == 1 and "TYPESAFE_API_KEY" in r.output
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    r = runner.invoke(app, ["test", str(pol), "--judge", "openai"])
+    assert r.exit_code == 1 and "OPENAI_API_KEY" in r.output
+    r = runner.invoke(app, ["record", str(pol), "tests", "--judge", "openai",
+                            "--out", str(tmp_path / "f.json")])
+    assert r.exit_code == 1 and "OPENAI_API_KEY" in r.output
+    r = runner.invoke(app, ["record", str(pol), "tests", "--judge", "mock"])
+    assert r.exit_code == 1 and "--judge must be one of" in r.output
 
 
 def test_synthetic_fixture_warning(tmp_path: Path) -> None:
