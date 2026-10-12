@@ -27,7 +27,7 @@ from memworthy.policy.loader import Policy, PolicyError, load_policy
 from memworthy.policy.schema import PolicySpec
 from memworthy.stores.dict import DictStore
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "Answer", "Candidate", "Decision", "DictStore", "Episode", "FoundryDecisionJudge", "Gate",
